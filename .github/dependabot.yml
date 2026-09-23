@@ -1,0 +1,47 @@
+# Keeps every pin current: the CI actions (commit SHAs), the Python dependencies
+# (uv.lock), the Dockerfile's base images (tag and digest) and the pre-commit hook revs.
+#
+# A cooldown holds back version updates until a release is a week old, so a
+# compromised release has time to be caught and pulled before it reaches this repo.
+# Security updates are not delayed. Docker keeps Dependabot's short default cooldown:
+# the image scan in CI fails on fixable CVEs, and a new base image digest is the fix.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      github-actions:
+        patterns: ["*"]
+
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    ignore:
+      # Deliberate bumps, not routine ones: the image's Python minor version, and uv's
+      # minor version, which moves together with [tool.uv] required-version and CI.
+      - dependency-name: python
+        versions: [">= 3.13"]
+      - dependency-name: astral-sh/uv
+        versions: [">= 0.13"]
+
+  - package-ecosystem: pre-commit
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      pre-commit:
+        patterns: ["*"]

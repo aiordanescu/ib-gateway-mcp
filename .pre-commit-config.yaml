@@ -1,0 +1,55 @@
+# Hooks mirror gnzsnz/ib-gateway-docker where they apply, plus the Python toolchain.
+# Install once with `uv run pre-commit install`. Dependabot keeps the revs current (or run
+# `uv run pre-commit autoupdate`); keep ruff's rev equal to the ruff version in uv.lock.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-added-large-files
+      - id: detect-private-key
+
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.45.0
+    hooks:
+      - id: markdownlint
+        args: ["--disable", "MD013"]
+        # Generated from the tool registry by scripts/gen_docs.py (tests check them).
+        exclude: ^docs/(tools|coverage)\.md$
+
+  # Runs hadolint in Docker. Without Docker, commit with SKIP=hadolint-docker; CI runs it.
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.15.1
+    hooks:
+      - id: hadolint-docker
+        # The upstream hook runs the untagged (latest) image; pin it to the rev, by digest.
+        # Update the tag and digest together with the rev.
+        entry: ghcr.io/hadolint/hadolint:v2.15.1@sha256:32dac94127fd60b7b7e3fbfc65e1383b9b5e25c9bfd7b8536de7a539fe68a12d hadolint
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.8
+    hooks:
+      - id: ruff-check
+        args: ["--fix"]
+      - id: ruff-format
+
+  - repo: local
+    hooks:
+      # Public repo: real IBKR account ids must never be committed, in any letter case.
+      # The placeholders in CLAUDE.md (DU1234567, DU7654321, DU1111111, DU9999999,
+      # U1234567, U7654321) are allowed.
+      - id: no-ibkr-account-ids
+        name: no real IBKR account ids (use placeholders such as DU1234567)
+        language: pygrep
+        entry: '\b(?:DU|DF|DI|U|F|I)(?!(?:1234567|7654321|1111111|9999999)\b)\d{6,8}\b'
+        args: ["--ignore-case"]
+        exclude: ^uv\.lock$
+      - id: mypy
+        name: mypy (strict)
+        entry: uv run mypy
+        language: system
+        types: [python]
+        pass_filenames: false

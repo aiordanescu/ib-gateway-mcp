@@ -1,0 +1,106 @@
+# IB Gateway (gnzsnz/ib-gateway-docker) plus ib-gateway-mcp, on a paper login.
+#
+# ib-gateway-mcp is built from a clone of https://github.com/aiordanescu/ib-gateway-mcp
+# (0.1.0 is unreleased; no image is published yet), so run this from its examples/:
+#   git clone https://github.com/aiordanescu/ib-gateway-mcp.git
+#   cd ib-gateway-mcp/examples
+#
+# Run it on a host you do not share: the secrets are files on this host, and anyone
+# who can read them (or run docker) can trade through the gateway.
+#
+# 1. Create the secrets, readable only by their owner:
+#      umask 077
+#      printf 'TWS_USERID=...\n' > .env
+#      printf '%s' '<paper password>' > tws_password.txt
+#      openssl rand -hex 32 > mcp_auth_token.txt
+#    Compose mounts secret files with their owner and mode from this host, so on Linux
+#    give each one to the user its container runs as (Docker Desktop needs no chown):
+#      sudo chown 1000 tws_password.txt       # ib-gateway-docker's user (ibgateway)
+#      sudo chown 10001 mcp_auth_token.txt    # ib-gateway-mcp's user
+# 2. docker compose up -d     (builds the ib-gateway-mcp image on the first run)
+#
+# MCP clients connect to http://127.0.0.1:8000/mcp with the header
+# "Authorization: Bearer <contents of mcp_auth_token.txt>". The port stays on loopback;
+# to reach it from another machine, put a TLS reverse proxy in front of it.
+#
+# The defaults are read-only twice over: the gateway's own Read-Only API setting is on
+# and the server runs the readonly profile. To place paper orders set READ_ONLY_API=no
+# and IBKR_MCP_PROFILE=trading in .env. If orders still fail with error 321, see
+# "Troubleshooting" in the README.
+
+name: ib-gateway-mcp
+
+services:
+  ib-gateway:
+    image: ghcr.io/gnzsnz/ib-gateway:stable
+    restart: always
+    environment:
+      TWS_USERID: ${TWS_USERID:?set TWS_USERID in .env}
+      # From a file, so the password is not in the container's environment.
+      TWS_PASSWORD_FILE: /run/secrets/tws_password
+      TRADING_MODE: paper
+      READ_ONLY_API: ${READ_ONLY_API:-yes}
+      TWOFA_TIMEOUT_ACTION: ${TWOFA_TIMEOUT_ACTION:-exit}
+      # Persist the gateway's settings (Read-Only API, trusted IPs...) across restarts.
+      # With TRADING_MODE=both, ib-gateway-docker appends _live and _paper to this path;
+      # then mount a parent directory instead (e.g. tws:/home/ibgateway/tws with
+      # TWS_SETTINGS_PATH=/home/ibgateway/tws/settings), or the settings land outside
+      # the volume and are lost when the container is recreated.
+      TWS_SETTINGS_PATH: /home/ibgateway/tws_settings
+      TIME_ZONE: ${TIME_ZONE:-Etc/UTC}
+      TZ: ${TIME_ZONE:-Etc/UTC}
+    secrets:
+      - tws_password
+    volumes:
+      - tws_settings:/home/ibgateway/tws_settings
+    # No published ports: ib-gateway-mcp reaches the gateway on the compose network
+    # (4004 = paper). Publishing the raw API port (for example "127.0.0.1:4002:4004")
+    # lets any local process, an agent with shell access included, place orders directly
+    # and bypass every safety rail of ib-gateway-mcp. Add one only if you accept that.
+
+  ib-gateway-mcp:
+    # Built from this clone. Once released, the image will be published as
+    # ghcr.io/aiordanescu/ib-gateway-mcp; then replace build and image with
+    #   image: ghcr.io/aiordanescu/ib-gateway-mcp:<version>
+    build:
+      context: ..
+    image: ib-gateway-mcp:local
+    restart: unless-stopped
+    depends_on:
+      - ib-gateway
+    environment:
+      IB_HOST: ib-gateway
+      IB_PORT: "4004"
+      IB_CLIENT_ID: "80"
+      IBKR_MCP_PROFILE: ${IBKR_MCP_PROFILE:-readonly}
+      IBKR_MCP_AUTH_TOKEN_FILE: /run/secrets/mcp_auth_token
+      # Every preview, order, cancel and FA change; an open circuit breaker is kept
+      # next to it (audit.breaker.json), so it survives a restart.
+      IBKR_MCP_AUDIT_LOG: /audit/audit.jsonl
+      # Order limits for the trading profile, for example:
+      # IBKR_MCP_MAX_QUANTITY: "100"
+      # IBKR_MCP_MAX_NOTIONAL: "10000"
+      # IBKR_MCP_ALLOWED_CURRENCIES: USD
+    secrets:
+      - mcp_auth_token
+    volumes:
+      - mcp_audit:/audit
+    ports:
+      - "127.0.0.1:8000:8000"
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  tws_settings:
+  mcp_audit:
+
+secrets:
+  tws_password:
+    file: ./tws_password.txt
+  mcp_auth_token:
+    file: ./mcp_auth_token.txt

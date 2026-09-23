@@ -1,0 +1,245 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UV_VERSION: "0.12.5" # keep in step with [tool.uv] required-version and the Dockerfile
+
+jobs:
+  lint:
+    name: Lint and type check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+      - name: Install dependencies
+        run: uv sync --locked
+      - name: Ruff lint
+        run: uv run ruff check
+      - name: Ruff format
+        run: uv run ruff format --check
+      - name: Mypy (src, tests, scripts)
+        run: uv run mypy
+      - name: Generated docs are current
+        run: uv run python scripts/gen_docs.py --check
+
+  hooks:
+    name: Pre-commit hooks (account-id guard, private keys, markdown, hadolint)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+      - name: Install dependencies
+        run: uv sync --locked
+      - name: Run every hook on every file
+        run: uv run pre-commit run --all-files --show-diff-on-failure
+        env:
+          SKIP: mypy # the lint job runs it
+
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+        with:
+          version: ${{ env.UV_VERSION }}
+      - name: Audit the locked runtime dependencies
+        run: |
+          uv export --frozen --no-dev --no-emit-project --format requirements-txt -o requirements.txt
+          uvx pip-audit --strict --disable-pip -r requirements.txt
+
+  test:
+    name: Tests (Python ${{ matrix.python-version }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ["3.12", "3.13", "3.14"]
+        include:
+          - os: macos-latest
+            python-version: "3.12"
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: uv sync --locked
+      # Integration tests (live_readonly, paper) are deselected by pyproject's addopts.
+      - name: Unit, MCP and end-to-end tests with coverage
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
+        run: uv run pytest --cov --cov-report=term-missing --cov-report=xml
+      - name: Unit, MCP and end-to-end tests
+        if: matrix.os != 'ubuntu-latest' || matrix.python-version != '3.12'
+        run: uv run pytest
+      - name: Upload the coverage report
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: coverage-xml
+          path: coverage.xml
+          retention-days: 14
+
+  lowest:
+    name: Tests on the lowest allowed direct dependencies
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: "3.12"
+      - name: Install the floors of pyproject's version ranges
+        run: uv sync --resolution lowest-direct
+      - name: Unit, MCP and end-to-end tests
+        run: uv run --no-sync pytest
+
+  package:
+    name: Build and check the package
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: "3.12"
+      - name: Build the sdist and wheel
+        run: uv build
+      - name: Check the archives
+        run: |
+          uvx twine check --strict dist/*
+          wheel=$(ls dist/*.whl)
+          unzip -l "$wheel" | grep -q 'ib_gateway_mcp/py.typed'
+          if unzip -l "$wheel" | grep -E ' (tests|docs|scripts|examples|\.claude|\.github)/'; then
+            echo "the wheel carries files outside the package" >&2
+            exit 1
+          fi
+          sdist=$(ls dist/*.tar.gz)
+          tar tzf "$sdist" | grep -q '/tests/unit/test_docs.py$'
+          if tar tzf "$sdist" | grep -E '/(\.claude|\.github|examples)/|__pycache__'; then
+            echo "the sdist carries files it should not" >&2
+            exit 1
+          fi
+      - name: Install the wheel into a clean environment and run it
+        run: |
+          uv venv --python 3.12 "$RUNNER_TEMP/venv"
+          uv pip install --python "$RUNNER_TEMP/venv" dist/*.whl
+          "$RUNNER_TEMP/venv/bin/ib-gateway-mcp" --version
+          "$RUNNER_TEMP/venv/bin/python" -c "import ib_gateway_mcp; print(ib_gateway_mcp.__version__)"
+
+  docker:
+    name: Docker build and smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+      - name: Read the package version for the image labels
+        id: meta
+        run: |
+          version=$(python3 -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+      - name: Build image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        with:
+          context: .
+          push: false
+          load: true
+          tags: ib-gateway-mcp:ci
+          build-args: |
+            VERSION=${{ steps.meta.outputs.version }}
+            REVISION=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      # Fails on CRITICAL and HIGH findings that have a fixed version. Unfixed ones, which
+      # the Debian base image carries at any given time (many marked "will not fix"), have
+      # no action to take here and would keep CI red until upstream ships a fix. A fixable
+      # one means refreshing the base image digest (Dependabot's docker update, or by hand)
+      # or bumping the affected dependency in uv.lock. The Trivy binary is the version this
+      # action release pins (v0.70.0 for v0.36.0), so Dependabot moves both together.
+      - name: Scan the image for known vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ib-gateway-mcp:ci
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
+      - name: Smoke test the image
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          # The version label and the installed package agree with pyproject.toml.
+          label=$(docker inspect -f '{{ index .Config.Labels "org.opencontainers.image.version" }}' ib-gateway-mcp:ci)
+          test "$label" = "$VERSION"
+          test "$(docker run --rm ib-gateway-mcp:ci --version)" = "ib-gateway-mcp $VERSION"
+          # HTTP without a token must refuse to start.
+          if docker run --rm ib-gateway-mcp:ci; then
+            echo "the image started HTTP without a bearer token" >&2
+            exit 1
+          fi
+          # With a token it serves /healthz (no gateway needed) and turns away requests
+          # to /mcp that lack the token.
+          docker run -d --name mcp -p 127.0.0.1:8000:8000 \
+            -e IBKR_MCP_AUTH_TOKEN=ci-0123456789abcdef0123456789abcdef ib-gateway-mcp:ci
+          status=starting
+          for _ in $(seq 1 45); do
+            status=$(docker inspect -f '{{.State.Health.Status}}' mcp)
+            [ "$status" = healthy ] && break
+            sleep 2
+          done
+          if [ "$status" != healthy ]; then
+            docker logs mcp
+            exit 1
+          fi
+          curl -fsS http://127.0.0.1:8000/healthz
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:8000/mcp \
+            -H 'Content-Type: application/json' -d '{}')
+          test "$code" = 401
+          docker rm -f mcp
+      - name: Check the compose example
+        run: |
+          touch examples/mcp_auth_token.txt examples/tws_password.txt
+          docker compose -f examples/docker-compose.yml config --quiet
+        env:
+          TWS_USERID: ci

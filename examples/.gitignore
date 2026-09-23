@@ -1,0 +1,4 @@
+# Secrets created for docker-compose.yml; never commit them.
+.env
+tws_password.txt
+mcp_auth_token.txt

@@ -1,0 +1,189 @@
+[project]
+name = "ib-gateway-mcp"
+version = "0.1.0"
+description = "MCP server and Python library with broad coverage of the Interactive Brokers TWS API, companion to ib-gateway-docker"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Alex Iordanescu" }]
+requires-python = ">=3.12"
+keywords = [
+    "mcp",
+    "model-context-protocol",
+    "interactive-brokers",
+    "ibkr",
+    "tws-api",
+    "ib-gateway",
+    "ib-async",
+    "trading",
+    "llm",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Framework :: AsyncIO",
+    "Framework :: Pydantic :: 2",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Office/Business :: Financial :: Investment",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Typing :: Typed",
+]
+dependencies = [
+    # Exact: services/_hooks.py and _ib_compat.py patch ib_async 2.1.0 internals, and the
+    # coverage table (docs/coverage.md) lists that version's gaps.
+    "ib-async==2.1.0",
+    "mcp>=2.2,<2.3",  # mcp/confirm.py relies on the 2.2 resolver and elicitation APIs
+    # Floors are the versions CI tests (the lock, and a lowest-direct run).
+    "pydantic>=2.13",
+    "pydantic-settings>=2.15",
+]
+
+[project.urls]
+Homepage = "https://github.com/aiordanescu/ib-gateway-mcp"
+Documentation = "https://github.com/aiordanescu/ib-gateway-mcp/blob/main/docs/tools.md"
+Repository = "https://github.com/aiordanescu/ib-gateway-mcp"
+Issues = "https://github.com/aiordanescu/ib-gateway-mcp/issues"
+Changelog = "https://github.com/aiordanescu/ib-gateway-mcp/blob/main/CHANGELOG.md"
+
+[project.scripts]
+ib-gateway-mcp = "ib_gateway_mcp.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv]
+required-version = ">=0.12.5,<0.13"
+
+[tool.uv.build-backend]
+# The sdist carries the test suite (placeholders only) and the docs it checks, so
+# packagers can run it.
+source-include = [
+    "tests/**",
+    "docs/tools.md",
+    "docs/coverage.md",
+    "scripts/gen_docs.py",
+    "CHANGELOG.md",
+]
+source-exclude = ["**/__pycache__"]
+
+[dependency-groups]
+dev = [
+    "mypy>=2.3.1",
+    "pre-commit>=4.6.2",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.16.8",
+]
+
+# --- ruff -----------------------------------------------------------------
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src"]
+
+[tool.ruff.lint]
+select = [
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings
+    "F",     # pyflakes
+    "I",     # isort
+    "B",     # flake8-bugbear
+    "UP",    # pyupgrade
+    "SIM",   # flake8-simplify
+    "RUF",   # ruff-specific
+    "ASYNC", # flake8-async
+    "S",     # flake8-bandit
+    "PT",    # flake8-pytest-style
+    "RET",   # flake8-return
+    "C4",    # flake8-comprehensions
+    "PL",    # pylint
+]
+ignore = [
+    "PLR0913", # too many arguments: tool signatures mirror the TWS API
+    "PLR2004", # magic values: IB error codes are clearer inline
+    "ASYNC109", # APIs take explicit timeouts on purpose, like asyncio.wait_for
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = [
+    "S101",    # assert is how pytest works
+    "S105",    # hardcoded "passwords" are test tokens
+    "S106",
+    "PLR0915", # long end-to-end tests read better unsplit
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["ib_gateway_mcp", "tests"]
+
+# --- mypy -----------------------------------------------------------------
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["src", "tests", "scripts"]
+mypy_path = "src"
+warn_unreachable = true
+plugins = ["pydantic.mypy"]
+# ib_async ships py.typed but leaves many functions unannotated.
+untyped_calls_exclude = ["ib_async"]
+
+[[tool.mypy.overrides]]
+module = ["eventkit", "eventkit.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# Tests poll state that changes across awaits, which mypy's narrowing cannot see.
+module = ["tests.*"]
+warn_unreachable = false
+disable_error_code = ["comparison-overlap"]
+
+[[tool.mypy.overrides]]
+# Settings is fed raw, environment-like strings on purpose.
+module = ["tests.unit.test_config"]
+disable_error_code = ["arg-type"]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+
+# --- pytest ---------------------------------------------------------------
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+addopts = ["--strict-markers", "-m", "not live_readonly and not paper"]
+xfail_strict = true
+filterwarnings = ["error"]
+markers = [
+    "live_readonly: read-only probes against a real gateway (needs IB_HOST and IB_PORT)",
+    "paper: order tests against a paper gateway (needs a paper login)",
+]
+
+# --- coverage -------------------------------------------------------------
+
+[tool.coverage.run]
+source = ["ib_gateway_mcp"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 95
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "^\\s*\\.\\.\\.\\s*$",  # stub bodies only, not every line containing "..."
+    "@overload",
+]

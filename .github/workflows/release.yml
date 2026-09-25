@@ -105,7 +105,9 @@ jobs:
           DIGEST: ${{ steps.build.outputs.digest }}
         run: |
           for platform in linux/amd64 linux/arm64; do
-            out=$(docker run --rm --platform "$platform" "$IMAGE@$DIGEST" --version)
+            # Docker keeps one platform per digest reference: drop the previous one first.
+            docker image rm -f "$IMAGE@$DIGEST" >/dev/null 2>&1 || true
+            out=$(docker run --rm --pull always --platform "$platform" "$IMAGE@$DIGEST" --version)
             echo "$platform: $out"
             test "$out" = "ib-gateway-mcp $VERSION"
           done

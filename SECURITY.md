@@ -4,7 +4,7 @@
 
 ## Supported versions
 
-No version has been released yet; until 0.1.0 is out, fixes land on the `main` branch. After that, security fixes go into the latest release.
+Security fixes go into the latest release, published on PyPI and as the container image `ghcr.io/aiordanescu/ib-gateway-mcp`. Older releases don't get fixes; upgrade to the latest.
 
 ## Reporting a vulnerability
 

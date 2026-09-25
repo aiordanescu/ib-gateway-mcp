@@ -1,11 +1,12 @@
 name: Release
 
-# Publishes a version when its tag is pushed (git tag -a v0.1.0 && git push origin v0.1.0).
-# The tag must match pyproject.toml's version. Every CI job runs first; then the image is
+# Publishes a version when its tag is pushed (git tag -a v0.1.1 && git push origin v0.1.1).
+# The tag must match pyproject.toml's version. Every CI job runs first. Then the image is
 # built for amd64 and arm64, pushed to ghcr.io/aiordanescu/ib-gateway-mcp as <version>,
 # <major>.<minor>, latest and stable (a pre-release tag such as v0.2.0-rc.1 gets only its
-# own version), attested, and pulled back for a smoke test on both platforms. The GitHub
-# release takes its notes from the version's section of CHANGELOG.md.
+# own version), attested, and pulled back for a smoke test on both platforms; and the
+# sdist and wheel go to PyPI. The GitHub release, created once both are out, takes its
+# notes from the version's section of CHANGELOG.md.
 
 on:
   push:
@@ -112,9 +113,42 @@ jobs:
             test "$out" = "ib-gateway-mcp $VERSION"
           done
 
+  pypi:
+    name: Publish the package to PyPI
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # The environment holds PYPI_API_TOKEN and admits only v* tags.
+    environment:
+      name: pypi
+      url: https://pypi.org/project/ib-gateway-mcp/
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+        with:
+          version: "0.12.5" # keep in step with ci.yml's UV_VERSION
+          python-version: "3.12"
+          enable-cache: false # a release builds from nothing cached
+      - name: Build the sdist and wheel, and check they carry the tag's version
+        run: |
+          uv build
+          version=${GITHUB_REF_NAME#v}
+          ls "dist/ib_gateway_mcp-$version.tar.gz" "dist/ib_gateway_mcp-$version-py3-none-any.whl"
+          uvx twine check --strict dist/*
+      # With an API token PyPI takes no attestations; they come with trusted publishing.
+      - name: Upload to PyPI
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          attestations: false
+
   release:
     name: GitHub release
-    needs: image
+    needs: [image, pypi]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -135,7 +169,10 @@ jobs:
           if not match or not match.group(1).strip():
               raise SystemExit(f"CHANGELOG.md has no section for {version}")
           image = f"ghcr.io/{os.environ['GITHUB_REPOSITORY']}:{version}"
-          notes = match.group(1).strip() + f"\n\nContainer image: `docker pull {image}`\n"
+          notes = match.group(1).strip() + (
+              f"\n\nContainer image: `docker pull {image}`\n"
+              f"PyPI: `pip install ib-gateway-mcp=={version}`\n"
+          )
           pathlib.Path(os.environ["RUNNER_TEMP"], "notes.md").write_text(notes, encoding="utf-8")
           PY
       - name: Create the release

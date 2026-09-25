@@ -59,7 +59,7 @@ services:
     # and bypass every safety rail of ib-gateway-mcp. Add one only if you accept that.
 
   ib-gateway-mcp:
-    # stable follows the latest release; pin a version (:0.1.0) to upgrade on your own
+    # stable follows the latest release; pin a version (:0.1.1) to upgrade on your own
     # schedule. To run a clone instead, replace image with build: <path to the clone>.
     image: ghcr.io/aiordanescu/ib-gateway-mcp:stable
     restart: unless-stopped

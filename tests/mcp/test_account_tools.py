@@ -182,6 +182,23 @@ async def test_get_position_pnl_not_found(mcp_client: McpClientFactory, fake_ib:
     fake_ib.cancelPnLSingle.assert_called_once_with(PAPER_ACCOUNT, "", 265598)
 
 
+async def test_get_position_pnl_without_a_position_and_no_update_is_not_found(
+    mcp_client: McpClientFactory, fake_ib: MagicMock
+) -> None:
+    fake_ib.reqContractDetailsAsync.side_effect = returns([contract_details(stock())])
+    fake_ib.positions.return_value = []
+    fake_ib.pnlSingle.return_value = []
+    fake_ib.reqPnLSingle.return_value = PnLSingle(PAPER_ACCOUNT, "", 265598)  # IBKR stays silent
+    async with mcp_client() as client:
+        assert mcp_client.gateway is not None
+        mcp_client.gateway.account.pnl_wait = 0.05
+        result = await client.call_tool("get_position_pnl", {"contract": {"con_id": 265598}})
+    text = error_text(result)
+    assert "not_found: Account DU1234567 has no position and no P&L today" in text
+    assert "request_timeout" not in text
+    fake_ib.cancelPnLSingle.assert_called_once_with(PAPER_ACCOUNT, "", 265598)
+
+
 async def test_get_executions(mcp_client: McpClientFactory, fake_ib: MagicMock) -> None:
     def fill(exec_id: str, minutes: int, side: str) -> Fill:
         the_execution = execution(

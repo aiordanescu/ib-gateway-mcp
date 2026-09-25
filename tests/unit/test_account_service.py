@@ -740,15 +740,28 @@ async def test_position_pnl_without_a_position_is_not_found(
     fake_ib.cancelPnLSingle.assert_called_once()
 
 
-async def test_position_pnl_timeout_says_there_is_no_position(
+async def test_position_pnl_timeout_without_a_position_is_not_found(
     service: AccountService, fake_ib: MagicMock
 ) -> None:
     fake_ib.reqContractDetailsAsync.side_effect = returns([contract_details(stock())])
     fake_ib.positions.return_value = []
     fake_ib.pnlSingle.return_value = []
     fake_ib.reqPnLSingle.return_value = PnLSingle(PAPER_ACCOUNT, "", 265598)
-    with pytest.raises(RequestTimeoutError, match="holds no open position in AAPL"):
+    with pytest.raises(NotFoundError, match="no position and no P&L today in AAPL"):
         await service.position_pnl(ContractSpec(symbol="AAPL"))
+    fake_ib.cancelPnLSingle.assert_called_once_with(PAPER_ACCOUNT, "", 265598)
+
+
+async def test_position_pnl_timeout_on_a_held_position_is_a_timeout(
+    service: AccountService, fake_ib: MagicMock
+) -> None:
+    fake_ib.reqContractDetailsAsync.side_effect = returns([contract_details(stock())])
+    fake_ib.positions.return_value = [position(qty=10)]
+    fake_ib.pnlSingle.return_value = []
+    fake_ib.reqPnLSingle.return_value = PnLSingle(PAPER_ACCOUNT, "", 265598)
+    with pytest.raises(RequestTimeoutError, match="try again"):
+        await service.position_pnl(ContractSpec(symbol="AAPL"))
+    fake_ib.cancelPnLSingle.assert_called_once_with(PAPER_ACCOUNT, "", 265598)
 
 
 async def test_position_pnl_reuses_an_open_subscription(

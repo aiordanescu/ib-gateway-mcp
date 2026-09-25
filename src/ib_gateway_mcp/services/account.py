@@ -544,8 +544,9 @@ class AccountService(BaseService):
         Raises:
             InvalidRequestError: ``contract`` is a combo (BAG); IBKR keeps P&L per leg.
             NotFoundError, AmbiguousContractError: The contract cannot be resolved.
-            NotFoundError: IBKR reports no position and no P&L for it in the account.
-            RequestTimeoutError: No update arrived in time.
+            NotFoundError: IBKR reports no position and no P&L for it in the account, or
+                sends nothing in time for a contract the account does not hold.
+            RequestTimeoutError: No update arrived in time for a position the account holds.
         """
         acct = self.accounts.resolve(account)
         model = clean_str(model_code) or ""
@@ -563,26 +564,36 @@ class AccountService(BaseService):
         def matches(entry: PnLSingle) -> bool:
             return entry.account == acct and entry.modelCode == model and entry.conId == con_id
 
+        not_found = (
+            f"Account {acct} has no position and no P&L today in {label}. "
+            "get_positions lists what the account holds."
+        )
         held = any(p.contract.conId == con_id for p in ib.positions(acct))
-        hint = _PNL_HINT
-        if not held:
-            hint = f"Account {acct} holds no open position in {label} (get_positions lists them)."
 
         def subscribe() -> int | None:
             ib.reqPnLSingle(acct, model, con_id)
             return _req_id_of(ib, "pnlSingleKey2ReqId", (acct, model, con_id))
 
-        entry, as_of = await self._pnl_once(
-            lock=f"pnl_single:{acct}:{model}:{con_id}",
-            event=ib.pnlSingleEvent,
-            matches=matches,
-            current=lambda: ib.pnlSingle(acct),
-            has_values=lambda e: _has_values(e.dailyPnL, e.unrealizedPnL, e.realizedPnL, e.value),
-            subscribe=subscribe,
-            unsubscribe=lambda: ib.cancelPnLSingle(acct, model, con_id),
-            what=what,
-            hint=hint,
-        )
+        try:
+            entry, as_of = await self._pnl_once(
+                lock=f"pnl_single:{acct}:{model}:{con_id}",
+                event=ib.pnlSingleEvent,
+                matches=matches,
+                current=lambda: ib.pnlSingle(acct),
+                has_values=lambda e: _has_values(
+                    e.dailyPnL, e.unrealizedPnL, e.realizedPnL, e.value
+                ),
+                subscribe=subscribe,
+                unsubscribe=lambda: ib.cancelPnLSingle(acct, model, con_id),
+                what=what,
+                hint=_PNL_HINT,
+            )
+        except RequestTimeoutError:
+            # IBKR never sends a P&L update for a contract the account neither holds nor
+            # traded today, so for one it doesn't hold the silence means there is none.
+            if held:
+                raise
+            raise NotFoundError(not_found) from None
         position = clean_float(entry.position)
         values = (
             clean_float(entry.dailyPnL),
@@ -591,10 +602,7 @@ class AccountService(BaseService):
             clean_float(entry.value),
         )
         if not position and all(value is None for value in values):
-            raise NotFoundError(
-                f"Account {acct} has no position and no P&L today in {label}. "
-                "get_positions lists what the account holds."
-            )
+            raise NotFoundError(not_found)
         daily, unrealized, realized, market_value = values
         return PositionPnl(
             account=acct,

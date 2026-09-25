@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Added
+
+- README: install a release from its git tag with `uvx` (server) or `uv add`/`pip install` (library), without a clone.
+
 ## [0.1.0] - 2026-09-25
 
 The first release.

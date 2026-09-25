@@ -4,7 +4,9 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
-The first release, 0.1.0, is in preparation. It will contain everything below.
+## [0.1.0] - 2026-09-25
+
+The first release.
 
 ### Added
 
@@ -14,7 +16,8 @@ The first release, 0.1.0, is in preparation. It will contain everything below.
 - Orders: previews with IBKR's what-if and single-use, server-side tokens; brackets, OCA groups, combos, IBKR algos; modify, cancel, cancel-all and option exercise.
 - Safety rails: read-only default, live-trading switch, human confirmation of live actions through MCP elicitation (text written by the model is quoted), order limits (notional, quantity, symbols, security types, currencies), order and preview rate limits, a circuit breaker that survives restarts, opt-in switches for IBKR's global cancel and billed regulatory snapshots, a JSONL audit log (checked at start-up), and a start-up summary of the safety configuration.
 - Configuration from `IB_*` and `IBKR_MCP_*` environment variables (a blank value counts as unset), with `_FILE` variants for secrets.
-- Dockerfile (non-root numeric user, healthcheck) and an `examples/docker-compose.yml` next to ib-gateway-docker.
+- Container image `ghcr.io/aiordanescu/ib-gateway-mcp` for amd64 and arm64 (tags `0.1.0`, `0.1`, `latest`, `stable`) with a build provenance attestation and an SBOM: a non-root numeric user and a healthcheck. `examples/docker-compose.yml` runs it next to ib-gateway-docker.
 - Reference docs: `docs/tools.md` (generated from the registry, with the library method behind each tool and the fields of every nested input type) and `docs/coverage.md`.
 
-[Unreleased]: https://github.com/aiordanescu/ib-gateway-mcp/commits/main
+[Unreleased]: https://github.com/aiordanescu/ib-gateway-mcp/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/aiordanescu/ib-gateway-mcp/releases/tag/v0.1.0

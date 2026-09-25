@@ -8,7 +8,7 @@ An [MCP](https://modelcontextprotocol.io) server and Python library for the **In
 
 Add one service next to your IB Gateway container, and any MCP client (Claude, Cursor, and others) gets what the gateway offers: contracts, market data, history, scanners, news, fundamentals, account and P&L, and orders. Orders sit behind safety rails.
 
-> **Status:** early development. Version 0.1.0 is not released yet: there is no PyPI package and no published container image (releases will go to PyPI as `ib-gateway-mcp` and to `ghcr.io/aiordanescu/ib-gateway-mcp`). Run it from a clone of the repository, or build the image with the Dockerfile. Beyond the offline test suite, it has been tested against a real IB Gateway (10.45): the order suite on a paper login, and the read-only suite on both paper and live accounts.
+> **Status:** early development. Version 0.1.0 is published as the container image `ghcr.io/aiordanescu/ib-gateway-mcp`; to run the server without Docker or use the library, install it from a clone of the repository. Beyond the offline test suite, it has been tested against a real IB Gateway (10.45): the order suite on a paper login, and the read-only suite on both paper and live accounts.
 
 ## Why
 
@@ -35,18 +35,18 @@ As of September 2026, the MCP options for Interactive Brokers are either hosted 
 
 ## Quick start with Docker
 
-[`examples/docker-compose.yml`](https://github.com/aiordanescu/ib-gateway-mcp/blob/main/examples/docker-compose.yml) runs ib-gateway-docker on a paper login next to this server, which it builds from the clone:
+[`examples/docker-compose.yml`](https://github.com/aiordanescu/ib-gateway-mcp/blob/main/examples/docker-compose.yml) runs ib-gateway-docker on a paper login next to this server. The gateway's own settings (2FA, trading mode, settings volume, VNC) are documented in [ib-gateway-docker's README](https://github.com/gnzsnz/ib-gateway-docker).
 
 ```sh
-git clone https://github.com/aiordanescu/ib-gateway-mcp.git
-cd ib-gateway-mcp/examples
+mkdir ib-gateway-mcp && cd ib-gateway-mcp
+curl -fsSLO https://raw.githubusercontent.com/aiordanescu/ib-gateway-mcp/main/examples/docker-compose.yml
 umask 077                                        # secrets readable by their owner only
 printf 'TWS_USERID=...\n' > .env
 printf '%s' '<paper password>' > tws_password.txt
 openssl rand -hex 32 > mcp_auth_token.txt
 sudo chown 1000 tws_password.txt                 # Linux only: the gateway image's user
 sudo chown 10001 mcp_auth_token.txt              # Linux only: this image's user
-docker compose up -d                             # builds the ib-gateway-mcp image first
+docker compose up -d
 ```
 
 Compose mounts secret files with their owner and mode from the host, hence the `chown` on Linux (Docker Desktop needs none). Run it on a host you do not share. The example publishes no gateway API port: the server reaches the gateway on the compose network, and a published API port would let any local process place orders around the safety rails.
@@ -58,13 +58,13 @@ claude mcp add --transport http ib-gateway http://127.0.0.1:8000/mcp \
   --header "Authorization: Bearer $(cat mcp_auth_token.txt)"
 ```
 
-To add the server to an existing ib-gateway-docker stack, copy the `ib-gateway-mcp` service (with `build.context` pointing at your clone), its secrets, and `IB_HOST` set to your gateway's service name. Inside the compose network the gateway listens on 4004 (paper) and 4003 (live).
+If ib-gateway-docker already runs in its own stack, run the server as a second stack, so updating one never recreates the other: copy the `ib-gateway-mcp` service with its secret and volume, set `IB_HOST` to the gateway's service name, and attach the service to the gateway stack's network (declared under `networks:` with `external: true`). Inside that network the gateway listens on 4004 (paper) and 4003 (live).
 
-No image is published yet, so Compose builds it from the clone; `docker build -t ib-gateway-mcp:local .` in the clone builds it on its own. Released images will be published as `ghcr.io/aiordanescu/ib-gateway-mcp`. The image runs as a non-root user (uid and gid 10001), serves streamable HTTP on port 8000 (`/mcp`), and has a Docker healthcheck on `/healthz`. The compose example runs it with a read-only root filesystem, no capabilities, and the audit log on a volume at `/audit`. `/healthz` (liveness) and `/readyz` (200 only while the gateway connection is up) are unauthenticated and return only `{"state", "ready"}`.
+The image is published for amd64 and arm64 as `ghcr.io/aiordanescu/ib-gateway-mcp`, tagged with each version (`0.1.0`), its minor series (`0.1`), and `latest` and `stable` for the latest release. Each image carries an SBOM and a build provenance attestation (`gh attestation verify oci://ghcr.io/aiordanescu/ib-gateway-mcp:0.1.0 --owner aiordanescu`). `docker build -t ib-gateway-mcp:local .` in a clone builds it yourself. The image runs as a non-root user (uid and gid 10001), serves streamable HTTP on port 8000 (`/mcp`), and has a Docker healthcheck on `/healthz`. The compose example runs it with a read-only root filesystem, no capabilities, and the audit log on a volume at `/audit`. `/healthz` (liveness) and `/readyz` (200 only while the gateway connection is up) are unauthenticated and return only `{"state", "ready"}`.
 
 ## Running from source
 
-Needs Python 3.12 or newer and [uv](https://docs.astral.sh/uv/). The package is not on PyPI yet, so run it from a clone:
+Needs Python 3.12 or newer and [uv](https://docs.astral.sh/uv/). Run it from a clone:
 
 ```sh
 git clone https://github.com/aiordanescu/ib-gateway-mcp.git

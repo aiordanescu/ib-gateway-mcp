@@ -1,9 +1,12 @@
 # IB Gateway (gnzsnz/ib-gateway-docker) plus ib-gateway-mcp, on a paper login.
 #
-# ib-gateway-mcp is built from a clone of https://github.com/aiordanescu/ib-gateway-mcp
-# (0.1.0 is unreleased; no image is published yet), so run this from its examples/:
-#   git clone https://github.com/aiordanescu/ib-gateway-mcp.git
-#   cd ib-gateway-mcp/examples
+# The gateway service is ib-gateway-docker's own image; its README documents every
+# gateway variable (2FA, trading mode, settings, VNC):
+# https://github.com/gnzsnz/ib-gateway-docker
+#
+# Put this file in a directory of its own:
+#   mkdir ib-gateway-mcp && cd ib-gateway-mcp
+#   curl -fsSLO https://raw.githubusercontent.com/aiordanescu/ib-gateway-mcp/main/examples/docker-compose.yml
 #
 # Run it on a host you do not share: the secrets are files on this host, and anyone
 # who can read them (or run docker) can trade through the gateway.
@@ -17,7 +20,7 @@
 #    give each one to the user its container runs as (Docker Desktop needs no chown):
 #      sudo chown 1000 tws_password.txt       # ib-gateway-docker's user (ibgateway)
 #      sudo chown 10001 mcp_auth_token.txt    # ib-gateway-mcp's user
-# 2. docker compose up -d     (builds the ib-gateway-mcp image on the first run)
+# 2. docker compose up -d
 #
 # MCP clients connect to http://127.0.0.1:8000/mcp with the header
 # "Authorization: Bearer <contents of mcp_auth_token.txt>". The port stays on loopback;
@@ -26,7 +29,7 @@
 # The defaults are read-only twice over: the gateway's own Read-Only API setting is on
 # and the server runs the readonly profile. To place paper orders set READ_ONLY_API=no
 # and IBKR_MCP_PROFILE=trading in .env. If orders still fail with error 321, see
-# "Troubleshooting" in the README.
+# https://github.com/aiordanescu/ib-gateway-mcp#troubleshooting
 
 name: ib-gateway-mcp
 
@@ -41,11 +44,8 @@ services:
       TRADING_MODE: paper
       READ_ONLY_API: ${READ_ONLY_API:-yes}
       TWOFA_TIMEOUT_ACTION: ${TWOFA_TIMEOUT_ACTION:-exit}
-      # Persist the gateway's settings (Read-Only API, trusted IPs...) across restarts.
-      # With TRADING_MODE=both, ib-gateway-docker appends _live and _paper to this path;
-      # then mount a parent directory instead (e.g. tws:/home/ibgateway/tws with
-      # TWS_SETTINGS_PATH=/home/ibgateway/tws/settings), or the settings land outside
-      # the volume and are lost when the container is recreated.
+      # Keeps the gateway's settings across restarts. Before switching TRADING_MODE to
+      # both, read TWS_SETTINGS_PATH in ib-gateway-docker's README: the path changes.
       TWS_SETTINGS_PATH: /home/ibgateway/tws_settings
       TIME_ZONE: ${TIME_ZONE:-Etc/UTC}
       TZ: ${TIME_ZONE:-Etc/UTC}
@@ -59,12 +59,9 @@ services:
     # and bypass every safety rail of ib-gateway-mcp. Add one only if you accept that.
 
   ib-gateway-mcp:
-    # Built from this clone. Once released, the image will be published as
-    # ghcr.io/aiordanescu/ib-gateway-mcp; then replace build and image with
-    #   image: ghcr.io/aiordanescu/ib-gateway-mcp:<version>
-    build:
-      context: ..
-    image: ib-gateway-mcp:local
+    # stable follows the latest release; pin a version (:0.1.0) to upgrade on your own
+    # schedule. To run a clone instead, replace image with build: <path to the clone>.
+    image: ghcr.io/aiordanescu/ib-gateway-mcp:stable
     restart: unless-stopped
     depends_on:
       - ib-gateway

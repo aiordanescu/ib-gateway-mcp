@@ -1018,7 +1018,8 @@ Return the live P&L of one position: daily, unrealized, realized and market valu
 Pass the position's con_id (from get_positions) for an exact match. Waits a few
 seconds at most for IBKR's first update. Errors: not_found when the account has no
 position and no P&L today in that contract; ambiguous_contract lists candidates;
-invalid_request for a combo (BAG: ask per leg); request_timeout when IBKR sends nothing.
+invalid_request for a combo (BAG: ask per leg); request_timeout when IBKR sends nothing
+for a position the account holds (retry once).
 
 | Parameter | Type | Required | Default | Description |
 |---|---|---|---|---|

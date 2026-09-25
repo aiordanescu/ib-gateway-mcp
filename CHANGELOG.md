@@ -4,9 +4,11 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-09-25
+
 ### Added
 
-- README: install a release from its git tag with `uvx` (server) or `uv add`/`pip install` (library), without a clone.
+- Published on PyPI as `ib-gateway-mcp`: `uvx ib-gateway-mcp` runs the server and `pip install ib-gateway-mcp` installs the library, with no clone. Releases now go to PyPI and ghcr.io together.
 
 ## [0.1.0] - 2026-09-25
 
@@ -23,5 +25,6 @@ The first release.
 - Container image `ghcr.io/aiordanescu/ib-gateway-mcp` for amd64 and arm64 (tags `0.1.0`, `0.1`, `latest`, `stable`) with a build provenance attestation and an SBOM: a non-root numeric user and a healthcheck. `examples/docker-compose.yml` runs it next to ib-gateway-docker.
 - Reference docs: `docs/tools.md` (generated from the registry, with the library method behind each tool and the fields of every nested input type) and `docs/coverage.md`.
 
-[Unreleased]: https://github.com/aiordanescu/ib-gateway-mcp/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/aiordanescu/ib-gateway-mcp/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/aiordanescu/ib-gateway-mcp/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/aiordanescu/ib-gateway-mcp/releases/tag/v0.1.0

@@ -1,6 +1,6 @@
 [project]
 name = "ib-gateway-mcp"
-version = "0.1.0"
+version = "0.1.1"
 description = "MCP server and Python library with broad coverage of the Interactive Brokers TWS API, companion to ib-gateway-docker"
 readme = "README.md"
 license = "MIT"

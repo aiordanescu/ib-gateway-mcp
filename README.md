@@ -8,7 +8,7 @@ An [MCP](https://modelcontextprotocol.io) server and Python library for the **In
 
 Add one service next to your IB Gateway container, and any MCP client (Claude, Cursor, and others) gets what the gateway offers: contracts, market data, history, scanners, news, fundamentals, account and P&L, and orders. Orders sit behind safety rails.
 
-> **Status:** early development. Version 0.1.0 is published as the container image `ghcr.io/aiordanescu/ib-gateway-mcp`; to run the server without Docker or use the library, install a release from its git tag (see [Running without Docker](#running-without-docker) and [Library](#library)). Beyond the offline test suite, it has been tested against a real IB Gateway (10.45): the order suite on a paper login, and the read-only suite on both paper and live accounts.
+> **Status:** early development. Releases are published on [PyPI](https://pypi.org/project/ib-gateway-mcp/) as `ib-gateway-mcp` and as the container image `ghcr.io/aiordanescu/ib-gateway-mcp`. Beyond the offline test suite, it has been tested against a real IB Gateway (10.45): the order suite on a paper login, and the read-only suite on both paper and live accounts.
 
 ## Why
 
@@ -60,19 +60,17 @@ claude mcp add --transport http ib-gateway http://127.0.0.1:8000/mcp \
 
 If ib-gateway-docker already runs in its own stack, run the server as a second stack, so updating one never recreates the other: copy the `ib-gateway-mcp` service with its secret and volume, set `IB_HOST` to the gateway's service name, and attach the service to the gateway stack's network (declared under `networks:` with `external: true`). Inside that network the gateway listens on 4004 (paper) and 4003 (live).
 
-The image is published for amd64 and arm64 as `ghcr.io/aiordanescu/ib-gateway-mcp`, tagged with each version (`0.1.0`), its minor series (`0.1`), and `latest` and `stable` for the latest release. Each image carries an SBOM and a build provenance attestation (`gh attestation verify oci://ghcr.io/aiordanescu/ib-gateway-mcp:0.1.0 --owner aiordanescu`). `docker build -t ib-gateway-mcp:local .` in a clone builds it yourself. The image runs as a non-root user (uid and gid 10001), serves streamable HTTP on port 8000 (`/mcp`), and has a Docker healthcheck on `/healthz`. The compose example runs it with a read-only root filesystem, no capabilities, and the audit log on a volume at `/audit`. `/healthz` (liveness) and `/readyz` (200 only while the gateway connection is up) are unauthenticated and return only `{"state", "ready"}`.
+The image is published for amd64 and arm64 as `ghcr.io/aiordanescu/ib-gateway-mcp`, tagged with each version (`0.1.1`), its minor series (`0.1`), and `latest` and `stable` for the latest release. Each image carries an SBOM and a build provenance attestation (`gh attestation verify oci://ghcr.io/aiordanescu/ib-gateway-mcp:0.1.1 --owner aiordanescu`). `docker build -t ib-gateway-mcp:local .` in a clone builds it yourself. The image runs as a non-root user (uid and gid 10001), serves streamable HTTP on port 8000 (`/mcp`), and has a Docker healthcheck on `/healthz`. The compose example runs it with a read-only root filesystem, no capabilities, and the audit log on a volume at `/audit`. `/healthz` (liveness) and `/readyz` (200 only while the gateway connection is up) are unauthenticated and return only `{"state", "ready"}`.
 
 ## Running without Docker
 
-Needs Python 3.12 or newer and [uv](https://docs.astral.sh/uv/). `uvx` runs a release straight from its git tag, with no clone:
+Needs Python 3.12 or newer. With [uv](https://docs.astral.sh/uv/), `uvx` runs the latest release from PyPI with nothing to install first (`pip install ib-gateway-mcp` works too):
 
 ```sh
-IB_HOST=127.0.0.1 IB_PORT=4002 \
-  uvx --from git+https://github.com/aiordanescu/ib-gateway-mcp@v0.1.0 ib-gateway-mcp    # stdio
+IB_HOST=127.0.0.1 IB_PORT=4002 uvx ib-gateway-mcp                # stdio
 
-openssl rand -hex 32 > mcp_auth_token.txt                                              # HTTP on 127.0.0.1:8000
-IBKR_MCP_AUTH_TOKEN_FILE=mcp_auth_token.txt \
-  uvx --from git+https://github.com/aiordanescu/ib-gateway-mcp@v0.1.0 ib-gateway-mcp --transport http --port 8000
+openssl rand -hex 32 > mcp_auth_token.txt                        # HTTP on 127.0.0.1:8000
+IBKR_MCP_AUTH_TOKEN_FILE=mcp_auth_token.txt uvx ib-gateway-mcp --transport http --port 8000
 ```
 
 HTTP always needs a bearer token of at least 32 characters. For a quick test on the loopback address only, `IBKR_MCP_ALLOW_NO_AUTH=true` serves it without one.
@@ -84,14 +82,14 @@ A stdio entry for an MCP client:
   "mcpServers": {
     "ib-gateway": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/aiordanescu/ib-gateway-mcp@v0.1.0", "ib-gateway-mcp"],
+      "args": ["ib-gateway-mcp"],
       "env": { "IB_HOST": "127.0.0.1", "IB_PORT": "4002", "IBKR_MCP_PROFILE": "readonly" }
     }
   }
 }
 ```
 
-To run a clone instead (for development, or an unreleased commit), use `uv sync` in it, then `uv run ib-gateway-mcp` with the same variables and options, or `"command": "uv"` with `"args": ["--directory", "/path/to/ib-gateway-mcp", "run", "ib-gateway-mcp"]` in the client entry.
+Pin a version with `ib-gateway-mcp==0.1.1` in place of `ib-gateway-mcp`. To run a clone instead (for development, or an unreleased commit), use `uv sync` in it, then `uv run ib-gateway-mcp` with the same variables and options, or `"command": "uv"` with `"args": ["--directory", "/path/to/ib-gateway-mcp", "run", "ib-gateway-mcp"]` in the client entry.
 
 The server starts even when the gateway is down and keeps reconnecting; tools then fail with `not_connected` and the reason (`get_health` explains it).
 
@@ -172,11 +170,10 @@ Caveats:
 
 ## Library
 
-The services behind the tools are an async Python library. Install a release from its git tag:
+The services behind the tools are an async Python library:
 
 ```sh
-uv add "ib-gateway-mcp @ git+https://github.com/aiordanescu/ib-gateway-mcp@v0.1.0"
-pip install "ib-gateway-mcp @ git+https://github.com/aiordanescu/ib-gateway-mcp@v0.1.0"    # or with pip
+uv add ib-gateway-mcp        # or: pip install ib-gateway-mcp
 ```
 
 ```python

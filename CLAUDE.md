@@ -36,7 +36,7 @@ Everything lives in `src/ib_gateway_mcp/`, in two layers.
 | `confirm.py` | Human confirmation of live actions through MCP elicitation. |
 | `auth.py` | Bearer-token auth and DNS-rebinding protection for HTTP. |
 
-`cli.py` is the `ib-gateway-mcp` entry point. Outside `src/`: `tests/`, `scripts/gen_docs.py` (writes `docs/tools.md`), `docs/coverage.md` (the TWS API coverage table), the `Dockerfile` with `examples/docker-compose.yml`, and CI in `.github/workflows/ci.yml`.
+`cli.py` is the `ib-gateway-mcp` entry point. Outside `src/`: `tests/`, `scripts/gen_docs.py` (writes `docs/tools.md`), `docs/coverage.md` (the TWS API coverage table), the `Dockerfile` with `examples/docker-compose.yml`, and CI and releases in `.github/workflows/` (`ci.yml`, `release.yml`).
 
 ## Setup
 
@@ -63,6 +63,10 @@ uv run pre-commit run --all-files            # markdownlint, hadolint, account-i
 ```
 
 CI also runs the tests on Python 3.12 to 3.14 and on macOS, requires 95% coverage (`uv run pytest --cov`), tests against the lowest versions `pyproject.toml` allows (`uv sync --resolution lowest-direct`, so raise a floor when you rely on a newer feature), audits the locked dependencies, and builds the package and the Docker image.
+
+## Releases
+
+Set the version in `pyproject.toml`, move the `[Unreleased]` entries in `CHANGELOG.md` under a heading for that version, and merge. Then push an annotated tag `v<version>` on that commit. `release.yml` runs every CI job, publishes the image to `ghcr.io/aiordanescu/ib-gateway-mcp` for amd64 and arm64 (tags `<version>` and `<major>.<minor>`, plus `latest` and `stable` unless it is a pre-release), attests it, and creates the GitHub release from the changelog section. A tag that doesn't match `pyproject.toml` fails before anything is published.
 
 ## Tests
 

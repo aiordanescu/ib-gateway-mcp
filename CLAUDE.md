@@ -16,13 +16,14 @@ Everything lives in `src/ib_gateway_mcp/`, in two layers.
 | `connection.py` | `ConnectionManager`: the single `ib_async.IB`, connect and reconnect, health, and the trading gate `require_trading()`. |
 | `config.py` | `Settings` from `IB_*` (connection) and `IBKR_MCP_*` (server) variables; profiles and toolsets. |
 | `accounts.py` | Account scope: the default account and the allowlist. |
-| `startup.py` | Start-up checks shared by the server and `Gateway.start`: the safety-configuration summary in the log, and the audit-file check. |
+| `startup.py` | Start-up checks shared by the server and `Gateway.start`: the safety-configuration summary in the log, the audit-file check, and the check of `IB_GATEWAY_SETTINGS_DIR` (logged, never fatal). |
 | `subscriptions.py` | `SubscriptionRegistry`: streaming subscriptions with caps, deduplication and idle reaping. |
 | `errors.py` | The exception hierarchy; every class has a stable `code`. |
 | `services/` | One service per domain; `base.py` holds `BaseService._call`. |
 | `models/` | Pydantic inputs (`*Spec`) and outputs (`*Out`, `*Result`, `*List`). |
 | `safety/` | Preview tokens, order limits, rate limit and circuit breaker, audit log. Talks to neither the gateway nor MCP. |
 | `_ib_compat.py` | Every read or write of `ib_async` internals, in one place. |
+| `_gateway_log.py` | The gateway's login phase (`login_state` in `get_health`) from IB Gateway's `launcher.log` in `IB_GATEWAY_SETTINGS_DIR`: every pattern of that undocumented format with an example line, the time-zone recovery, and the hints. Opens only `launcher*.log`, off the event loop; nothing from a line leaves it, in output or in logs. |
 | `services/_hooks.py` | Callbacks `ib_async` drops or lacks, hooked on its wrapper. |
 
 **MCP layer** (`mcp/`), thin by design:
@@ -36,7 +37,7 @@ Everything lives in `src/ib_gateway_mcp/`, in two layers.
 | `confirm.py` | Human confirmation of live actions through MCP elicitation. |
 | `auth.py` | Bearer-token auth and DNS-rebinding protection for HTTP. |
 
-`cli.py` is the `ib-gateway-mcp` entry point. Outside `src/`: `tests/`, `scripts/gen_docs.py` (writes `docs/tools.md`), `docs/coverage.md` (the TWS API coverage table), the `Dockerfile` with `examples/docker-compose.yml`, and CI and releases in `.github/workflows/` (`ci.yml`, `release.yml`).
+`cli.py` is the `ib-gateway-mcp` entry point. Outside `src/`: `tests/` with `tests/data/` (scrubbed IB Gateway log fixtures, kept byte for byte, so the whitespace hooks skip them), `skills/ib-gateway-mcp/` (the Agent Skills guide for agents that use the server), `scripts/gen_docs.py` (writes `docs/tools.md`), `docs/coverage.md` (the TWS API coverage table), the `Dockerfile` with `examples/docker-compose.yml`, and CI and releases in `.github/workflows/` (`ci.yml`, `release.yml`).
 
 ## Setup
 
@@ -66,7 +67,7 @@ CI also runs the tests on Python 3.12 to 3.14 and on macOS, requires 95% coverag
 
 ## Releases
 
-Set the version in `pyproject.toml`, move the `[Unreleased]` entries in `CHANGELOG.md` under a heading for that version, and merge. Then push an annotated tag `v<version>` on that commit. `release.yml` runs every CI job, publishes the image to `ghcr.io/aiordanescu/ib-gateway-mcp` for amd64 and arm64 (tags `<version>` and `<major>.<minor>`, plus `latest` and `stable` unless it is a pre-release), attests it, uploads the sdist and wheel to PyPI (the `pypi` environment's `PYPI_API_TOKEN`, usable from `v*` tags only), and creates the GitHub release from the changelog section. A tag that doesn't match `pyproject.toml` fails before anything is published.
+Set the version in `pyproject.toml`, and `metadata.version` in `skills/ib-gateway-mcp/SKILL.md` and the tags in the README's skill install commands to the same version: tests check that the README tags match `metadata.version` and that it isn't behind the package, and `release.yml` refuses a tag the skill doesn't match. Move the `[Unreleased]` entries in `CHANGELOG.md` under a heading for that version, and merge. Then push an annotated tag `v<version>` on that commit. `release.yml` runs every CI job, publishes the image to `ghcr.io/aiordanescu/ib-gateway-mcp` for amd64 and arm64 (tags `<version>` and `<major>.<minor>`, plus `latest` and `stable` unless it is a pre-release), attests it, uploads the sdist and wheel to PyPI (the `pypi` environment's `PYPI_API_TOKEN`, usable from `v*` tags only), and creates the GitHub release from the changelog section. A tag that doesn't match `pyproject.toml` fails before anything is published.
 
 ## Tests
 
@@ -94,7 +95,7 @@ Set the version in `pyproject.toml`, move the `[Unreleased]` entries in `CHANGEL
 - **Errors** are raised from `ib_gateway_mcp.errors`, never as a bare `ValueError` for bad input; `invalid_request_on` turns a pydantic validation error into `InvalidRequestError`. Messages say what went wrong and what to do next, naming the tool to call where there is one. The registry passes these to the model as tool errors prefixed by their `code`; anything else surfaces as an internal error.
 - **Tools** are declared with `@ib_tool(toolset, Tier.X, title)` in `mcp/tools/`. They are `async`. Tool modules, `params.py` and `confirm.py` do not use `from __future__ import annotations`, because the SDK reads the real annotations. A tool that changes anything at IBKR is `WRITE` or `ADMIN` and belongs to a write toolset (`orders`, `advisor`, `admin`).
 - **Docstrings and parameter descriptions are the model's only documentation.** They become the tool's description and input schema, so state what the tool does, its key parameters, its limits and the errors it returns. Shared parameters use the aliases in `mcp/params.py`; others use `Annotated[..., Field(description=...)]`.
-- **Keep the checked docs in step.** After changing a tool's name, parameters or docstring, run `uv run python scripts/gen_docs.py`. A new or renamed parameter goes into `KEY_PARAMETERS` in `tests/mcp/test_toolsets.py`; a new tool needs a row in `docs/coverage.md` (edited by hand); a new setting needs a row in the README's configuration table. Tests check all four.
+- **Keep the checked docs in step.** After changing a tool's name, parameters or docstring, run `uv run python scripts/gen_docs.py`. A new or renamed parameter goes into `KEY_PARAMETERS` in `tests/mcp/test_toolsets.py`; a new tool needs a row in `docs/coverage.md` (edited by hand); a new setting needs a row in the README's configuration table. Tests check all four. `tests/unit/test_skill.py` checks that every identifier the skill names (tools, parameters, output fields, enum values, error codes, settings) exists, so a rename updates `skills/ib-gateway-mcp/SKILL.md` too.
 - **Settings** name their variable explicitly (`validation_alias`): `IB_*` for the connection and `IBKR_MCP_*` for the server. Secrets are `SecretStr` with a `*_FILE` variant. New settings default to the safe side.
 
 ## Safety invariants

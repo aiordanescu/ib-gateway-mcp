@@ -243,6 +243,9 @@ async def test_full_profile_smoke(mcp_client: McpClientFactory) -> None:
         assert tool.name.split("_")[0] in VERBS, f"{tool.name} is not verb-first"
         assert tool.description, tool.name
         assert tool.description.strip(), tool.name
+        # Claude Code cuts tool descriptions at 2,048 characters (the SDK keeps docstring
+        # indentation, which counts): past that, the Errors paragraph is lost.
+        assert len(tool.description) <= 2048, f"{tool.name}: {len(tool.description)} chars"
         assert tool.input_schema.get("type") == "object", tool.name
         assert isinstance(tool.input_schema.get("properties", {}), dict), tool.name
         # Injected values (the MCP context, human-confirmation resolvers) stay hidden.

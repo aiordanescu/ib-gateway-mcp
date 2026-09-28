@@ -1,0 +1,74 @@
+2026-08-31 11:00:02.213 INFO  [JTS-Main] - ------------------------------- IB GATEWAY RESTART --------------------------------
+2026-08-31 11:00:02.290 INFO  [JTS-Main] - Setting custom timezone: Asia/Kolkata
+2026-08-31 11:00:02.768 INFO  [JTS-Main] - Build 10.50.1e, Aug 25, 2026 4:05:30 PM
+2026-08-31 11:00:02.952 INFO  [AWT-EventQueue-0] - Running in auto-restart mode: restoring session token and session ID [userDirname=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa]...
+2026-08-31 11:00:02.952 INFO  [AWT-EventQueue-0] - Reading data from '/home/ibgateway/tws_settings_paper/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/autorestart'...
+2026-08-31 11:00:02.955 INFO  [AWT-EventQueue-0] - AutoRestartDescriptor[autoRestartType=DAILY,sessionId=00000000.0000,sessionToken=XYZSessionToken[type=SOFT,token=00000XXXXX..],paperMode=true,m_ctciMktDataAuth=true,publishTime=0]
+2026-08-31 11:00:02.955 INFO  [AWT-EventQueue-0] - Deleting '/home/ibgateway/tws_settings_paper/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/autorestart'...
+2026-08-31 11:00:03.162 INFO  [AWT-EventQueue-0] - Default timezone:Asia/Kolkata
+2026-08-31 11:00:03.181 INFO  [AWT-EventQueue-0] - Started on 20260831-05:30:03
+2026-08-31 11:00:03.182 INFO  [AWT-EventQueue-0] - Default timezone:Asia/Kolkata name:India Standard Time dst:0
+2026-08-31 11:00:03.358 INFO  [AWT-EventQueue-0] - Stopping GstatMessageMgr...
+2026-08-31 11:00:03.389 INFO  [JTS-AuthDispatcherS1-7] - Disconnecting server.example:4001 (SSL) [disconnectDetails=DisconnectDetails[sessionID=1,endPoint=server.example:4001 (SSL),reason=DISCONNECT_BY_DESIGN,cause=null,systemMessage=null,keepSocketOpen=false]]...
+2026-08-31 11:00:03.455 INFO  [AWT-EventQueue-0] - Contacting server.example:4001 as user NOT PRINTED
+2026-08-31 11:00:03.462 INFO  [JTS-Login-14] - Starting launcher login thread
+2026-08-31 11:00:03.463 INFO  [JTS-Login-14] - LauncherLoginThread.runLoginWithUI()[hotBackupStrategy=ON,loginAttempt=1,socketDelay=20000].
+2026-08-31 11:00:03.463 INFO  [JTS-Login-14] - SPLASH Connecting to server
+2026-08-31 11:00:03.463 INFO  [JTS-Login-14] - ### startLogin startTime=1788154203462
+2026-08-31 11:00:03.464 INFO  [JTS-Login-14] - ### loginAttempt loginAttempt=1
+2026-08-31 11:00:03.465 INFO  [JTS-Login-14] - ### onSocketOpenStart socketOpenStart=1788154203464; endPoint=server.example; port=4001
+2026-08-31 11:00:03.514 INFO  [AWT-EventQueue-0] - OvernightManager.dayInit: new values: dayOfTheWeek: 2 (Mon), YYYYMMofToday: 202608, YYYYMMDDofToday: 20260831, m_todayDate: 20260831, dueToChangeInTimezone: false
+2026-08-31 11:00:03.527 INFO  [JTS-Login-14] - ### onSocketOpenEnd socketOpenEnd=1788154203527
+2026-08-31 11:00:03.533 INFO  [JTS-Login-14] - ### onNsMsg loginMessageReq=1788154203533; brandNewUser=false
+2026-08-31 11:00:03.728 INFO  [JTS-Login-14] - SPLASH Authenticating
+2026-08-31 11:00:03.797 INFO  [JTS-AuthDispatcherS2-18] - Received NS_AUTH_START: 1
+2026-08-31 11:00:03.797 INFO  [JTS-AuthDispatcherS2-18] - pwd time to expiry ms: 2311802997000 days: 26757
+2026-08-31 11:00:03.798 INFO  [JTS-AuthDispatcherS2-18] -  NS_AUTH_START version=52 pwd=1 soft=0 token(s)=[token=0] initialTokenType=SOFT authenticationType=MARKET_DATA_CONNECTION identityHashcode=1
+2026-08-31 11:00:03.798 INFO  [JTS-AuthDispatcherS2-18] - Resetting session token (password auth)...
+2026-08-31 11:00:03.798 INFO  [JTS-AuthDispatcherS2-18] - Starting password Authentication
+2026-08-31 11:00:03.999 INFO  [JTS-CCPListenerS2-17] - Socket for connection server.example:4001 (SSL) was closed by peer.
+2026-08-31 11:00:03.999 INFO  [JTS-AuthDispatcherS2-18] - Received AUTH_RESULT
+2026-08-31 11:00:04.000 INFO  [JTS-AuthDispatcherS2-18] - AUTH_RESULT indicates wrong password
+2026-08-31 11:00:04.002 INFO  [JTS-AuthDispatcherS2-18] - Authorization failed: Invalid username or password. 
+
+Please check the "Caps Lock" key; passwords are case sensitive. 
+
+If you are in the process of opening an individual account, please contact 
+customer service to reset the password. 
+
+If you are in the process of opening any other type of account, please note 
+that the login is possible beginning the day after account approval.
+
+Example user name: trader777. MessageType: null. FailReason: 1
+2026-08-31 11:00:04.002 INFO  [JTS-AuthDispatcherS2-18] - Disconnecting server.example:4001 (SSL) [disconnectDetails=DisconnectDetails[sessionID=2,endPoint=server.example:4001 (SSL),reason=DISCONNECT_AUTHORIZATION_FAILED,cause=null,systemMessage=null,keepSocketOpen=false]]...
+2026-08-31 11:00:04.004 INFO  [JTS-DisconnectedS2-27] - IBGateway connection to ccp disconnected.
+2026-08-31 11:00:04.005 INFO  [JTS-AuthDispatcherS2-18] - Authentication completed.
+2026-08-31 11:00:04.005 INFO  [JTS-AuthDispatcherS2-18] - ### onAuthenticationCompleted tokenProtocol=0; authenticated=false
+2026-08-31 11:00:04.006 INFO  [JTS-AuthDispatcherS2-18] - ### onFinish
+2026-08-31 11:00:04.006 INFO  [JTS-AuthDispatcherS2-18] - setting session token in AuthenticationHandler: authenticationType=MARKET_DATA_CONNECTION hashCode=1 new=null old=XYZSessionToken[type=SOFT,token=00000XXXXX..] ctciOld=null
+2026-08-31 11:00:04.006 INFO  [JTS-AuthDispatcherS2-18] - ccp session token non-CTCI is set as Empty 
+2026-08-31 11:00:04.006 INFO  [JTS-AuthDispatcherS2-18] - Dispatcher thread terminating [sessionID=2,interrupted=true]...
+2026-08-31 11:00:04.007 INFO  [AWT-EventQueue-0] - SPLASH Stop monitor
+2026-08-31 11:00:04.149 INFO  [JTS-GstatMessageMgr-26] - Received response [errorCode=204,contentLen=-1].
+2026-08-31 11:00:04.246 INFO  [JavaFX Application Thread] - GstatMessagePanel: setup web app is done
+2026-08-31 11:00:07.230 INFO  [JTS-DeadlockMonitor-2] - Memory:total=786,432KB free=743,411KB HeapUsage: Max=786,432KB used=42,671KB committed=60,416KB NonHeapUsage: Max=0KB used=96,732KB committed=98,816KB
+2026-08-31 11:00:07.230 WARN  [JTS-DeadlockMonitor-2] - instance of control is not created yet
+2026-08-31 11:00:08.239 INFO  [JTS-DeadlockMonitor-2] - CPU:cur=0.10% avg=0.10% 30 min avg=0.10% 10 min avg=0.10% 5 min avg=0.10% 1 min avg=0.10%
+GC:called=15 times CPU used=0.01%
+Finalizer:cur=0.00% avg=0.00% 30 min avg=0.00% 10 min avg=0.00% 5 min avg=0.00% 1 min avg=0.00%
+Threads Count:curr live=32 curr daemon=21
+2026-08-31 11:03:04.151 INFO  [JTS-GstatMessageMgr-26] - Sending a request to GSTAT [url=https://server.example/v1/gstat//bulletins,data='{"p":"10501e","t":"Maintenance","tz":"Asia/Kolkata","peer":"server.example","format":"webapp","theme":"dark","fontSize":"12px","lang":"en","user":"***","ut":"paper"}']...
+2026-08-31 11:03:04.310 INFO  [JTS-GstatMessageMgr-26] - Received response [errorCode=204,contentLen=-1].
+2026-08-31 11:03:04.314 INFO  [JavaFX Application Thread] - GstatMessagePanel: bridge already created
+2026-08-31 11:03:04.314 INFO  [JavaFX Application Thread] - GstatMessagePanel: setup web app is done
+2026-08-31 11:05:07.243 INFO  [JTS-DeadlockMonitor-2] - Memory:total=786,432KB free=732,467KB HeapUsage: Max=786,432KB used=53,340KB committed=60,416KB NonHeapUsage: Max=0KB used=96,892KB committed=99,968KB
+2026-08-31 11:05:07.243 WARN  [JTS-DeadlockMonitor-2] - instance of control is not created yet
+2026-08-31 11:05:08.245 INFO  [JTS-DeadlockMonitor-2] - CPU:cur=0.04% avg=0.05% 30 min avg=0.05% 10 min avg=0.05% 5 min avg=0.05% 1 min avg=0.04%
+GC:called=16 times CPU used=0.00%
+Finalizer:cur=0.00% avg=0.00% 30 min avg=0.00% 10 min avg=0.00% 5 min avg=0.00% 1 min avg=0.00%
+Threads Count:curr live=27 curr daemon=18
+2026-08-31 11:06:04.311 INFO  [JTS-GstatMessageMgr-26] - Sending a request to GSTAT [url=https://server.example/v1/gstat//bulletins,data='{"p":"10501e","t":"Maintenance","tz":"Asia/Kolkata","peer":"server.example","format":"webapp","theme":"dark","fontSize":"12px","lang":"en","user":"***","ut":"paper"}']...
+2026-08-31 11:06:04.457 INFO  [JTS-GstatMessageMgr-26] - Received response [errorCode=204,contentLen=-1].
+2026-08-31 11:06:04.462 INFO  [JavaFX Application Thread] - GstatMessagePanel: bridge already created
+2026-08-31 11:06:04.462 INFO  [JavaFX Application Thread] - GstatMessagePanel: setup web app is done
+2026-08-31 11:09:04.458 INFO  [JTS-GstatMessageMgr-26] - Sending a request to GSTAT [url=https://server.example/v1/gstat//bulletins,data='{"p":"10501e","t":"Maintenance","tz":"Asia/Kolkata","peer":"server.example","format":"webapp","theme":"dark","fontSize":"12px","lang":"en","user":"***","ut":"paper"}']...

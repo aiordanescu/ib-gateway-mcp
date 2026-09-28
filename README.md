@@ -30,7 +30,7 @@ As of September 2026, the MCP options for Interactive Brokers are either hosted 
   - not yet: order conditions, cash-quantity orders and the rarer order types and algos ([list](https://github.com/aiordanescu/ib-gateway-mcp/blob/main/docs/coverage.md#not-supported-yet-orders))
 - **Toolsets:** register only what you need. Three profiles: `readonly` (default), `trading`, `full`. The tool list is large (the `readonly` profile's 50 tools carry about 175,000 characters of descriptions and input schemas), so a narrower `IBKR_MCP_TOOLSETS` leaves more of the model's context for the task.
 - **Safety rails for orders** (see [Safety](#safety)): preview tokens, limits, rate limits, circuit breaker, audit log, and human confirmation for live orders.
-- **Operational awareness:** a health tool that reports gateway state plainly: connection lost or restored, API in read-only mode, waiting on login or 2FA.
+- **Operational awareness:** a health tool that reports the connection plainly (refused, lost or restored, cut off from IBKR, API in read-only mode) and when it last went down. The API doesn't say why a gateway refuses connections; with read access to the gateway's settings directory, the tool also reports its login phase, such as waiting for 2FA approval or a rejected login ([Gateway login state](#gateway-login-state-optional)).
 - **Library plus server:** an MCP server over stdio or streamable HTTP (bearer-token auth), and an importable async Python library.
 
 ## Quick start with Docker
@@ -49,7 +49,7 @@ sudo chown 10001 mcp_auth_token.txt              # Linux only: this image's user
 docker compose up -d
 ```
 
-Compose mounts secret files with their owner and mode from the host, hence the `chown` on Linux (Docker Desktop needs none). Run it on a host you do not share. The example publishes no gateway API port: the server reaches the gateway on the compose network, and a published API port would let any local process place orders around the safety rails.
+Compose mounts secret files with their owner and mode from the host, hence the `chown` on Linux (Docker Desktop needs none). Run it on a host you do not share. The example publishes no gateway API port: the server reaches the gateway on the compose network, and a published API port would let any local process place orders around the safety rails. It also mounts the gateway's settings volume read-only into the server, so `get_health` reports the gateway's login phase ([Gateway login state](#gateway-login-state-optional)).
 
 Point an MCP client at `http://127.0.0.1:8000/mcp` with the header `Authorization: Bearer <contents of mcp_auth_token.txt>`. For Claude Code:
 
@@ -91,7 +91,91 @@ A stdio entry for an MCP client:
 
 Pin a version with `ib-gateway-mcp==0.1.1` in place of `ib-gateway-mcp`. To run a clone instead (for development, or an unreleased commit), use `uv sync` in it, then `uv run ib-gateway-mcp` with the same variables and options, or `"command": "uv"` with `"args": ["--directory", "/path/to/ib-gateway-mcp", "run", "ib-gateway-mcp"]` in the client entry.
 
-The server starts even when the gateway is down and keeps reconnecting; tools then fail with `not_connected` and the reason (`get_health` explains it).
+The server starts even when the gateway is down and keeps reconnecting; tools then fail with `not_connected`, and `get_health` reports what is known about why.
+
+## Gateway login state (optional)
+
+When the gateway refuses a connection, the TWS API doesn't say why: a gateway that is stopped, starting, waiting for a 2FA approval or stuck at its login looks the same. IB Gateway does log its login steps, to `launcher.log` in its settings directory. With `IB_GATEWAY_SETTINGS_DIR` set to that directory, `get_health` adds `login_state`: the phase (`restarting`, `logging_in`, `awaiting_2fa`, `throttled`, `login_rejected`, `login_idle`, `logged_in` or `unknown`) and since when, when the gateway's pause after repeated failed logins ends (`retry_at`), and the login attempts and 2FA challenges since the last successful login. While the gateway refuses the connection, the health hint then words that phase. The gateway stops writing to `launcher.log` once a login succeeds, so `logged_in` only means that the last login succeeded. Without the setting, `get_health` still reports `last_disconnect_at`, when the connection last went down. It is null if the server's first connection attempt succeeded and the connection hasn't dropped since; if the gateway was already down when the server started, it is the server's start time, also after the connection comes back, and the outage may be older. [docs/tools.md](https://github.com/aiordanescu/ib-gateway-mcp/blob/main/docs/tools.md#get_health) describes the fields.
+
+After a 2FA challenge nobody answered, or once the gateway's pause after failed logins ends, the gateway logs in again by itself only with ib-gateway-docker's `RELOGIN_AFTER_TWOFA_TIMEOUT=yes` (its default is `no`), which also means a new 2FA push after each unanswered one. Otherwise `login_state` turns `login_idle`, and the gateway container needs a restart.
+
+The gateway writes `launcher.log` to a volume only when ib-gateway-docker's `TWS_SETTINGS_PATH` is set: its default is empty, which leaves the file inside the gateway container. Mount the directory, not the file (the gateway rotates the log by renaming it), and mount it read-only. [`examples/docker-compose.yml`](https://github.com/aiordanescu/ib-gateway-mcp/blob/main/examples/docker-compose.yml) does this for a paper login:
+
+```yaml
+services:
+  tws-settings-init:            # gives the new volume to the gateway's user (uid 1000)
+    image: ghcr.io/gnzsnz/ib-gateway:stable
+    user: "0:0"
+    entrypoint: ["chown", "1000:1000", "/home/ibgateway/tws_settings"]
+    volumes:
+      - tws_settings:/home/ibgateway/tws_settings
+    restart: "no"
+  ib-gateway:
+    depends_on:
+      tws-settings-init:
+        condition: service_completed_successfully
+    environment:
+      TWS_SETTINGS_PATH: /home/ibgateway/tws_settings
+    volumes:
+      - tws_settings:/home/ibgateway/tws_settings
+  ib-gateway-mcp:
+    environment:
+      IB_GATEWAY_SETTINGS_DIR: /gateway/tws_settings
+    volumes:
+      - type: volume
+        source: tws_settings
+        target: /gateway/tws_settings    # not a path in this server's image
+        read_only: true
+        volume:
+          nocopy: true
+volumes:
+  tws_settings:
+```
+
+Docker creates a new named volume owned by root when the image has no such path, and ib-gateway-docker runs as uid 1000, so without `tws-settings-init` the gateway can't write its settings. The long syntax is what takes `nocopy`: together with a target that doesn't exist in this server's image, it keeps Docker from copying anything from the image into the gateway's volume.
+
+With `TRADING_MODE=both`, ib-gateway-docker appends `_live` and `_paper` to `TWS_SETTINGS_PATH` and never uses the path itself, so put the volume on the parent directory and point the server at the directory of the login behind its `IB_PORT`:
+
+```yaml
+services:
+  settings-init:                # as above, for the parent directory
+    image: ghcr.io/gnzsnz/ib-gateway:stable
+    user: "0:0"
+    entrypoint: ["chown", "1000:1000", "/home/ibgateway/settings"]
+    volumes:
+      - gateway_settings:/home/ibgateway/settings
+    restart: "no"
+  ib-gateway:
+    depends_on:
+      settings-init:
+        condition: service_completed_successfully
+    environment:
+      TRADING_MODE: both
+      TWS_SETTINGS_PATH: /home/ibgateway/settings/tws    # the gateway uses tws_live and tws_paper
+    volumes:
+      - gateway_settings:/home/ibgateway/settings
+  ib-gateway-mcp:
+    environment:
+      IB_PORT: "4004"                                    # paper; 4003 is live
+      IB_GATEWAY_SETTINGS_DIR: /gateway/tws_paper        # /gateway/tws_live for 4003
+    volumes:
+      - type: volume
+        source: gateway_settings
+        target: /gateway
+        read_only: true
+        volume:
+          nocopy: true
+volumes:
+  gateway_settings:
+```
+
+With bind mounts, mount the same host directory into both containers: `./tws_settings:/home/ibgateway/tws_settings` on the gateway and `./tws_settings:/gateway/tws_settings:ro` on the server. Create the directory before the first start and, on Linux, give it to the gateway's user (`sudo chown 1000:1000 tws_settings`): Docker creates a missing one owned by root. Under SELinux in enforcing mode (Fedora, RHEL), add `:z` to both mounts (`:ro,z` on the server's); never `:Z`, which makes the directory private to one container.
+
+A server run on the host (stdio, `uvx`) reads the directory itself, so the gateway needs a bind mount on that same host, and `IB_GATEWAY_SETTINGS_DIR` names the host path. Docker Desktop keeps named volumes inside its virtual machine, out of the host's reach, and a gateway on another machine (reached over an SSH tunnel, for example) can't be read at all. The server only reads the directory, and warns at start-up when it could write to it; on the host, run the server as a user that can read the directory but not write to it.
+
+This works with IB Gateway (ib-gateway-docker's gateway image) and was tested against the logs of IB Gateway 10.45 and 10.50; TWS is untested. The log format is IBKR's own and undocumented, so a gateway update may change it; whatever the server doesn't recognize reads as `unknown`.
+
+**Privacy.** Read access to the settings directory exposes more than the login phase. `launcher.log` holds, among other things, the host's local and public IP addresses, its MAC address, IBKR session ids, masked session-token prefixes and token hashes, a log upload key, and ad-request ids that base64-encode the login's user identifier. The gateway masks the username in its login lines, and no account ids were found in the log. During the daily auto-restart the directory briefly holds a file with the session token the restart reuses. The server opens only `launcher.log` and its rotated copies (`launcher.YYYYMMDD.log`), and returns only the parsed phase, times and counts, never log text. Mount the directory read-only and into this server only, and never mount `/home/ibgateway` or IBC's directory, which can hold the password.
 
 ## Configuration
 
@@ -105,6 +189,7 @@ Everything is set with environment variables. `IB_*` variables describe the gate
 | `IB_ACCOUNT` | | Default account. Without it, a login that manages several accounts has no default, and calls must name one. |
 | `IB_CONNECT_TIMEOUT` | `10` | Seconds per connection attempt. |
 | `IB_REQUEST_TIMEOUT` | `30` | Seconds per request. |
+| `IB_GATEWAY_SETTINGS_DIR` | | The gateway's settings directory, where it writes `launcher.log` (ib-gateway-docker's `TWS_SETTINGS_PATH`; with `TRADING_MODE=both` the `_live` or `_paper` one for `IB_PORT`), mounted read-only. `get_health` then reports the gateway's login phase (`login_state`). IB Gateway only. |
 | `IBKR_MCP_ACCOUNTS` | | Comma-separated accounts allowed besides the default; empty means only the default. |
 | `IBKR_MCP_PROFILE` | `readonly` | `readonly`, `trading` or `full`. |
 | `IBKR_MCP_TOOLSETS` | | Comma-separated toolsets; overrides the profile. |
@@ -166,6 +251,7 @@ Caveats:
 ## Troubleshooting
 
 - **Orders fail with error 321, or the gateway shows "API client needs write access".** The gateway's API is read-only: `get_health` reports `api_read_only: true` and the trading gate stays closed. Set `READ_ONLY_API=no` in ib-gateway-docker, or untick *Read-Only API* in the gateway's own settings (Configure > Settings > API > Settings, over VNC in ib-gateway-docker). If `READ_ONLY_API` is already `no` and the error persists, the gateway can still hold the old setting in its settings volume: set `READ_ONLY_API=yes`, restart the gateway, then set it back to `no` and restart it again. The server reconnects by itself after a gateway restart, which clears `api_read_only`; after a change in the gateway's settings alone, restart the server. While the API is read-only, IBKR also refuses `get_completed_orders` (error 321, at once), and `get_open_orders` for this server's own orders reads every client's orders and filters them, saying so in `note`.
+- **`get_health` reports `login_rejected` after the gateway's daily auto-restart** (its `detail` says IBKR refused the saved session). The auto-restart reuses the saved session instead of logging in; IBKR refused it and asked for the password, which an auto-restart can't enter, so the gateway waits at its login screen and doesn't retry. Approving a 2FA prompt won't help: restart the gateway container, a cold restart that logs in with the password (and a second factor, where the login has one). IBKR also ends saved sessions once a week (Sundays at 1:00 am ET): with ib-gateway-docker's `TWS_COLD_RESTART` set to a time after that, the gateway restarts cold every Sunday then. That covers the weekly case only.
 - **Quotes fail with error 10089 although delayed data is selected.** IBKR offers the login no delayed data for that instrument either (IB Gateway 10.45 does this for some instruments on paper logins); historical bars can still work. Subscribe to the exchange's data, or share market data with the paper account.
 
 ## Library
@@ -211,6 +297,37 @@ asyncio.run(main())
 ```
 
 Services: `gw.ops`, `gw.contracts`, `gw.market_data`, `gw.history`, `gw.scanners`, `gw.news`, `gw.fundamentals`, `gw.account`, `gw.options`, `gw.orders`, `gw.advisor`, `gw.admin`. They take and return the pydantic models in `ib_gateway_mcp.models` and raise the errors in `ib_gateway_mcp.errors` (all derived from `IbGatewayMcpError`). Error messages are written for the MCP tools and name them where they point to a next step; [docs/tools.md](https://github.com/aiordanescu/ib-gateway-mcp/blob/main/docs/tools.md) gives the service method behind each tool. Contract resolution (`qualify`, `qualify_details`, `qualify_many`) is shared by every service; `gw.contracts` has the lookups proper. The library applies the same account scope, trading gate and order rails as the server; `gw.ib` is a raw `ib_async.IB` escape hatch that bypasses them.
+
+## Agent skill (optional)
+
+[`skills/ib-gateway-mcp`](https://github.com/aiordanescu/ib-gateway-mcp/tree/main/skills/ib-gateway-mcp) is an [Agent Skills](https://agentskills.io) guide for the agent that uses this server. The tool descriptions cover each tool; the skill covers the workflows across them: preview, submit and fill checks, brackets, OCA groups and combos, market data types, which errors are final, and what to report while the gateway is down. It uses only the fields of the [specification](https://agentskills.io/specification) and bare tool names, so it works in any agent that loads skills. Install the release that matches your server; the commands below pin v0.2.0.
+
+Any agent, with [`npx skills`](https://github.com/vercel-labs/skills) (it asks which agents to install for) or the GitHub CLI's `gh skill` (a preview command):
+
+```sh
+npx skills add aiordanescu/ib-gateway-mcp#v0.2.0 --skill ib-gateway-mcp
+gh skill install aiordanescu/ib-gateway-mcp ib-gateway-mcp@v0.2.0 --agent <agent> --scope user
+```
+
+Claude Code:
+
+```sh
+npx skills add aiordanescu/ib-gateway-mcp#v0.2.0 --skill ib-gateway-mcp -a claude-code -g
+```
+
+Codex, inside a session:
+
+```text
+$skill-installer install https://github.com/aiordanescu/ib-gateway-mcp/tree/v0.2.0/skills/ib-gateway-mcp
+```
+
+Hermes Agent:
+
+```sh
+hermes skills install https://raw.githubusercontent.com/aiordanescu/ib-gateway-mcp/v0.2.0/skills/ib-gateway-mcp/SKILL.md
+```
+
+Or copy `skills/ib-gateway-mcp/` from the v0.2.0 tag into the agent's skills directory: `~/.claude/skills/` for Claude Code, `~/.agents/skills/` for most other agents.
 
 ## Development
 

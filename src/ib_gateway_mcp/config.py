@@ -184,6 +184,7 @@ class Settings(BaseSettings):
     ib_account: str | None = Field(None, validation_alias="IB_ACCOUNT")
     connect_timeout: float = Field(10.0, validation_alias="IB_CONNECT_TIMEOUT", gt=0)
     request_timeout: float = Field(30.0, validation_alias="IB_REQUEST_TIMEOUT", gt=0)
+    gateway_settings_dir: Path | None = Field(None, validation_alias="IB_GATEWAY_SETTINGS_DIR")
 
     # --- accounts and toolsets --------------------------------------------------
     accounts_allowlist: CsvList = Field(default_factory=list, validation_alias="IBKR_MCP_ACCOUNTS")
@@ -297,6 +298,30 @@ class Settings(BaseSettings):
         if isinstance(value, str):
             return value.strip() or None
         return value
+
+    @field_validator("gateway_settings_dir", mode="before")
+    @classmethod
+    def _blank_path_is_none(cls, value: object) -> object:
+        # A blank path would otherwise become ".", the working directory.
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
+
+    @field_validator("gateway_settings_dir")
+    @classmethod
+    def _expand_home(cls, value: Path | None) -> Path | None:
+        if value is None:
+            return None
+        try:
+            return value.expanduser()
+        except RuntimeError:
+            # ``~user`` with no such user, or ``~`` with no home directory. A ValueError
+            # becomes a ValidationError (the CLI's "invalid configuration" exit) that names
+            # the variable; hide_input_in_errors keeps the value out of it.
+            raise ValueError(
+                "cannot expand '~' (unknown user or no home directory); set "
+                "IB_GATEWAY_SETTINGS_DIR to an absolute path"
+            ) from None
 
     @field_validator("profile", mode="before")
     @classmethod

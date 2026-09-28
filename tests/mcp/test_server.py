@@ -4,6 +4,7 @@ No ``from __future__ import annotations`` here: this module defines tool functio
 the SDK needs their real annotations.
 """
 
+import re
 from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from types import SimpleNamespace
@@ -16,7 +17,7 @@ from mcp import Client
 from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 
-from ib_gateway_mcp.config import TOOLSETS, Settings
+from ib_gateway_mcp.config import PROFILES, TOOLSETS, Settings, enabled_toolsets
 from ib_gateway_mcp.errors import ConfigurationError, NotConnectedError
 from ib_gateway_mcp.gateway import Gateway
 from ib_gateway_mcp.mcp import server as server_module
@@ -340,10 +341,101 @@ def test_instructions_describe_the_safety_model(settings_factory: Callable[..., 
     )
     assert "read it with get_subscription_data" in streaming
     assert "600 seconds" in streaming
+    assert "kept across gateway reconnects" in streaming
     trading = build_instructions(settings_factory(token_ttl=90), frozenset({"ops", "orders"}))
     assert "submit_order(token)" in trading
     assert "90 seconds" in trading
     assert "human confirmation" in trading
+    assert "confirm fills with get_order_status" in trading
+    assert "get_open_orders" not in trading  # the account toolset is off
+    both = build_instructions(settings_factory(), frozenset({"ops", "orders", "account"}))
+    assert "check get_order_status or get_open_orders before trying again" in both
+    # The outage rule: not_accepting is not a diagnosis, so the model must not invent one.
+    for text in (readonly, streaming, trading):
+        assert "not_accepting alone doesn't say why" in text
+        assert "Relay its hint" in text
+        assert "report last_disconnect_at and don't guess one" in text
+        assert "Never restart the gateway or this server yourself" in text
+        assert "waiting on 2FA" not in text
+
+
+def worst_case_settings(settings_factory: Callable[..., Settings]) -> Settings:
+    """Every toolset, every limit set with long allowlists, and very large numbers."""
+    return settings_factory(
+        profile="full",
+        allow_live=True,
+        token_ttl=10**9,
+        subscription_idle_ttl=123456.789,
+        max_notional=123_456_789_012.34,
+        max_quantity=9_876_543.21,
+        allowed_symbols=[f"LONGSYMBOL{i:03d}" for i in range(60)],
+        allowed_sec_types="STK,OPT,FUT,FOP,CASH,BOND,CFD,WAR,IND,BAG,FUND,CMDTY,IOPT,CRYPTO,EVENT",
+        allowed_currencies="USD,EUR,GBP,JPY,CHF,CAD,AUD,HKD,SGD,SEK,NOK,DKK,MXN,CNH,KRW,INR,ZAR",
+        max_orders_per_minute=10**6,
+        max_previews_per_minute=10**6,
+        breaker_rejects=10**6,
+    )
+
+
+def test_instructions_fit_the_client_budget(settings_factory: Callable[..., Settings]) -> None:
+    """Claude Code cuts instructions at 2,048 characters; Codex may show only line one."""
+    worst = worst_case_settings(settings_factory)
+    text = build_instructions(worst, enabled_toolsets(worst))
+    assert len(text) <= server_module.INSTRUCTIONS_MAX_CHARS == 2048
+    assert text.splitlines()[-1].startswith("Order limits: max notional")  # limits come last
+    assert text.endswith("(cut short; a preview names any limit an order breaks).")
+    # A typical configuration keeps its limits and rates whole.
+    typical = settings_factory(
+        profile="full", max_notional=50_000, max_quantity=500, allowed_currencies=["USD"]
+    )
+    whole = build_instructions(typical, enabled_toolsets(typical))
+    assert len(whole) <= server_module.INSTRUCTIONS_MAX_CHARS
+    assert "cut short" not in whole
+    assert whole.endswith("after 5 consecutive rejections.")
+    for profile in PROFILES:
+        settings = settings_factory(profile=profile)
+        first = build_instructions(settings, enabled_toolsets(settings)).splitlines()[0]
+        # It must stand alone: what the server is, and what to do when a call fails.
+        assert len(first) <= 250
+        assert first.startswith("Interactive Brokers (IBKR) tools")
+        assert "call get_health" in first
+        assert first.endswith(".")
+
+
+SNAKE_CASE = re.compile(r"\b[a-z][a-z0-9]*(?:_[a-z0-9]+)+\b")
+
+
+def toolset_choices() -> list[frozenset[str]]:
+    """Each profile, each toolset alone (as IBKR_MCP_TOOLSETS resolves it), orders +/- account."""
+
+    def resolve(**fields: Any) -> frozenset[str]:
+        # model_construct: collection time, before the fixture that hides the environment.
+        return enabled_toolsets(Settings.model_construct(**{"toolsets": None, **fields}))
+
+    choices = [resolve(profile=profile) for profile in PROFILES]
+    choices += [resolve(toolsets=[toolset]) for toolset in sorted(TOOLSETS)]
+    choices += [frozenset({"ops", "orders"}), frozenset({"ops", "orders", "account"})]
+    return choices
+
+
+@pytest.mark.parametrize("toolsets", toolset_choices(), ids=lambda t: "+".join(sorted(t)))
+def test_instructions_name_only_enabled_tools(
+    settings_factory: Callable[..., Settings], toolsets: frozenset[str]
+) -> None:
+    """Every tool the instructions name is registered and enabled for these toolsets."""
+    specs = {spec.name: spec for spec in REGISTRY.specs()}
+    verbs = {name.split("_", 1)[0] for name in specs}  # get, list, preview, submit, ...
+    text = build_instructions(worst_case_settings(settings_factory), toolsets)
+    mentioned = set(SNAKE_CASE.findall(text))
+    tool_like = {word for word in mentioned if word in specs or word.split("_", 1)[0] in verbs}
+    assert tool_like, text
+    unknown = sorted(tool_like - specs.keys())
+    assert unknown == [], f"not registered tools: {unknown}"
+    disabled = sorted(name for name in tool_like if specs[name].toolset not in toolsets)
+    assert disabled == [], f"named but not enabled with {sorted(toolsets)}: {disabled}"
+    assert "get_health" in mentioned
+    if "orders" in toolsets:
+        assert {"submit_order", "get_order_status"} <= mentioned
 
 
 async def test_server_owns_a_gateway_when_none_is_injected(

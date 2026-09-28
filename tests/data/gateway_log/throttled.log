@@ -1,0 +1,40 @@
+2026-08-30 04:48:16.694 INFO  [JTS-Login-327] - LauncherLoginThread.runLoginWithUI()[hotBackupStrategy=ON,loginAttempt=8,socketDelay=30000].
+2026-08-30 04:48:16.694 INFO  [JTS-Login-327] - SPLASH Attempt 8: connecting to server
+2026-08-30 04:48:16.694 INFO  [JTS-Login-327] - SPLASH Attempt 8: connecting to server
+2026-08-30 04:48:16.694 INFO  [JTS-Login-327] - ### startLogin startTime=1788045496692
+2026-08-30 04:48:16.694 INFO  [JTS-Login-327] - ### loginAttempt loginAttempt=8
+2026-08-30 04:48:16.694 INFO  [JTS-Login-327] - ### onSocketOpenStart socketOpenStart=1788045496694; endPoint=server.example; port=4001
+2026-08-30 04:48:16.760 INFO  [JTS-Login-327] - ### onSocketOpenEnd socketOpenEnd=1788045496760
+2026-08-30 04:48:16.761 INFO  [JTS-Login-327] - ### onNsMsg loginMessageReq=1788045496761; brandNewUser=false
+2026-08-30 04:48:16.955 INFO  [JTS-Login-327] - SPLASH Attempt 8: Authenticating
+2026-08-30 04:48:17.023 INFO  [JTS-AuthDispatcherS29-330] - Received NS_AUTH_START: 1
+2026-08-30 04:48:17.023 INFO  [JTS-AuthDispatcherS29-330] - pwd time to expiry ms: 2311911704000 days: 26759
+2026-08-30 04:48:17.023 INFO  [JTS-AuthDispatcherS29-330] -  NS_AUTH_START version=52 pwd=1 soft=0 token(s)=[token=5, tokenSubtype=2, suffix=a[IB Key]] initialTokenType=PWD authenticationType=MARKET_DATA_CONNECTION identityHashcode=1
+2026-08-30 04:48:17.023 INFO  [JTS-AuthDispatcherS29-330] - Resetting session token (password auth)...
+2026-08-30 04:48:17.023 INFO  [JTS-AuthDispatcherS29-330] - Starting password Authentication
+2026-08-30 04:48:17.219 INFO  [JTS-AuthDispatcherS29-330] - Received AUTH_RESULT
+2026-08-30 04:48:17.219 INFO  [JTS-AuthDispatcherS29-330] - Passed pwd authentication.
+2026-08-30 04:48:17.286 INFO  [JTS-AuthDispatcherS29-330] - dsaViaSms=true
+2026-08-30 04:48:17.286 INFO  [JTS-AuthDispatcherS29-330] - Received CHALLENGE
+2026-08-30 04:48:17.286 INFO  [JTS-AuthDispatcherS29-330] - AuthTimeoutMonitor-CCP: pause
+2026-08-30 04:48:37.286 INFO  [JTS-AuthDispatcherS29-330] - SPLASH 19999 step 9 AuthDispatcher.processDataItr
+2026-08-30 04:48:37.286 INFO  [JTS-AuthDispatcherS29-330] - Received NS_TEST_REQUEST
+2026-08-30 04:48:37.286 INFO  [JTS-AuthDispatcherS29-330] - Sent NS_HEART_BEAT:#%#%0000MISC52;531;20260829-23:18:37;
+2026-08-30 04:48:57.353 INFO  [JTS-AuthDispatcherS29-330] - SPLASH 20068 step 9 AuthDispatcher.processDataItr
+2026-08-30 04:48:57.353 INFO  [JTS-AuthDispatcherS29-330] - Received NS_TEST_REQUEST
+2026-08-30 04:48:57.353 INFO  [JTS-AuthDispatcherS29-330] - Sent NS_HEART_BEAT:#%#%0000MISC52;531;20260829-23:18:57;
+2026-08-30 04:49:17.419 INFO  [JTS-AuthDispatcherS29-330] - SPLASH 20066 step 9 AuthDispatcher.processDataItr
+2026-08-30 04:49:17.419 INFO  [JTS-AuthDispatcherS29-330] - Received NS_TEST_REQUEST
+2026-08-30 04:49:17.419 INFO  [JTS-AuthDispatcherS29-330] - Sent NS_HEART_BEAT:#%#%0000MISC52;531;20260829-23:19:17;
+2026-08-30 04:55:38.669 INFO  [JTS-AuthDispatcherS29-330] - SPLASH 20065 step 9 AuthDispatcher.processDataItr
+2026-08-30 04:55:38.669 INFO  [JTS-AuthDispatcherS29-330] - Received NS_TEST_REQUEST
+2026-08-30 04:55:38.669 INFO  [JTS-AuthDispatcherS29-330] - Sent NS_HEART_BEAT:#%#%0000MISC52;531;20260829-23:25:38;
+2026-08-30 04:55:58.735 INFO  [JTS-AuthDispatcherS29-330] - SPLASH 20066 step 9 AuthDispatcher.processDataItr
+2026-08-30 04:55:58.735 INFO  [JTS-AuthDispatcherS29-330] - Received NS_TEST_REQUEST
+2026-08-30 04:55:58.735 INFO  [JTS-AuthDispatcherS29-330] - Sent NS_HEART_BEAT:#%#%0000MISC52;531;20260829-23:25:58;
+2026-08-30 04:55:59.236 INFO  [JTS-CCPListenerS29-329] - Socket for connection server.example:4001 (SSL) was closed by peer.
+2026-08-30 04:55:59.337 INFO  [JTS-Fuse-ClosedSocket-336] - Disconnecting server.example:4001 (SSL) [disconnectDetails=DisconnectDetails[sessionID=29,endPoint=server.example:4001 (SSL),reason=DISCONNECT_ON_BROKEN_SOCKET,cause=null,systemMessage=recv: EOF,keepSocketOpen=false]]...
+2026-08-30 04:55:59.339 INFO  [JTS-Fuse-ClosedSocket-336] - Authorization failed: SUPPRESS_MESSAGE_BOX. MessageType: null. FailReason: 2147483647
+2026-08-30 04:55:59.339 INFO  [JTS-DisconnectedS29-338] - IBGateway connection to ccp disconnected.
+2026-08-30 04:56:04.515 INFO  [AWT-EventQueue-0] - Stopping GstatMessageMgr...
+2026-08-30 04:56:04.521 ERROR [AWT-EventQueue-0] - Too many failed login attempts. Please wait 4 minutes & 55 seconds before attempting to re-login again.

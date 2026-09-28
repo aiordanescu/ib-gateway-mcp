@@ -120,36 +120,25 @@ async def preview_order(
 ) -> OrderPreview:
     """Check one order without sending it: limits, IBKR what-if, and a token to submit it.
 
-    Nothing is placed. Returns the order as it would be sent, IBKR's what-if (initial and
-    maintenance margin change, equity-with-loan change, commission estimate, warning
-    text), the estimated notional, and a `token` for submit_order (single-use; valid
-    until `expires_at`, 120 s by default, so preview again if the user takes longer).
-    Show the user the summary and what-if before submitting.
+    Nothing is placed. Returns the order as it would be sent, IBKR's what-if (margin and
+    equity changes, commission estimate, warning text), the estimated notional, and a
+    `token` for submit_order (single-use, valid until `expires_at`: preview again if the
+    user takes longer). Show the user the summary and what-if before submitting.
 
-    Prices by order_type: MKT and MOC none; LMT and LOC limit_price; STP aux_price
-    (stop); STP LMT aux_price + limit_price; MIT aux_price (trigger); LIT aux_price +
-    limit_price; TRAIL aux_price (trailing amount) or trailing_percent, optional
-    trail_stop_price; TRAIL LIMIT as TRAIL but trail_stop_price is required, plus
-    limit_price or limit_price_offset; REL optional aux_price (offset) and limit_price
-    (cap); MIDPRICE optional limit_price (cap); PEG MID (pegged to the midpoint) optional
-    aux_price (offset) and limit_price (cap); PEG MKT (pegged to the market) optional
-    aux_price (offset).
-    tif: DAY, GTC, IOC, FOK, GTD (needs good_till_date with a time zone), OPG (MKT/LMT at
-    the open). good_after_time delays the start. algo (MKT/LMT, SMART only): Adaptive
-    (priority Urgent/Normal/Patient), Twap, Vwap, ArrivalPx, PctVol (pct_vol of the
-    market's volume), ClosePx (aims at the close). all_or_none, hidden (NASDAQ-routed
-    only) and display_size (iceberg, less than quantity) shape the fill. model_code
-    trades within an advisor model portfolio of the account; soft_dollar_tier {name,
-    value} comes from get_soft_dollar_tiers. Not supported: order conditions, FA group
-    allocation, cash quantity, PEG BEST and other exotic order types.
-    Combos use preview_combo_order. Prices must sit on the contract's price increments
-    (e.g. 0.01 for US stocks above 1.00); others are refused with invalid_request naming
-    the nearest valid prices.
+    Prices by order_type: MKT, MOC none; LMT, LOC limit_price; STP aux_price (stop); STP
+    LMT aux_price + limit_price; MIT aux_price (trigger); LIT aux_price + limit_price;
+    TRAIL aux_price (amount) or trailing_percent, optional trail_stop_price; TRAIL LIMIT
+    as TRAIL plus trail_stop_price and limit_price or limit_price_offset; REL, PEG MID and
+    PEG MKT optional aux_price (offset); REL, MIDPRICE and PEG MID optional limit_price
+    (cap). The order's fields describe tif, algo, model_code and the other attributes.
+    Not supported: order conditions, FA group allocation, cash quantity, exotic order
+    types. Combos use preview_combo_order. Prices must sit on the contract's increments
+    (0.01 for US stocks above 1.00).
 
-    Errors: invalid_request (e.g. a price off the tick grid), order_limit (server limits
-    on symbols, sec types, quantity, notional; a notional check needs a price, so market
-    orders may need market data), not_found or ambiguous_contract, ib_api_error (IBKR
-    rejected the what-if, e.g. 201 with the reason; 321 means the gateway API is
+    Errors: invalid_request (e.g. a price off the tick grid, with the nearest valid
+    prices), order_limit (server limits; under a notional limit every order but a BUY
+    limit needs a market price, so market data), not_found or ambiguous_contract,
+    ib_api_error (IBKR rejected the what-if, e.g. 201; 321 means the gateway API is
     read-only), account_not_allowed, live_trading_disabled or configuration_error when
     trading is off.
     """

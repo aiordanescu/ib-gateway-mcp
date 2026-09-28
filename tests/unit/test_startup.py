@@ -1,18 +1,22 @@
-"""startup: the safety summary, risky combinations and the audit file check."""
+"""startup: the safety summary, risky combinations, the audit file and settings dir checks."""
 
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
+import os
+from collections.abc import Callable, Iterator
 from pathlib import Path
 
 import pytest
 
+from ib_gateway_mcp._gateway_log import GatewayLog
 from ib_gateway_mcp.config import Settings
 from ib_gateway_mcp.errors import ConfigurationError
 from ib_gateway_mcp.mcp.server import build_instructions, build_server
 from ib_gateway_mcp.startup import (
+    GATEWAY_SETTINGS_CHECK_TIMEOUT,
     check_audit_log,
+    check_gateway_settings_dir,
     log_safety_configuration,
     risky_settings,
     safety_summary,
@@ -78,3 +82,74 @@ def test_the_instructions_state_the_limits(settings_factory: Callable[..., Setti
     settings = settings_factory(profile="trading", max_quantity=100)
     text = build_instructions(settings, frozenset({"ops", "orders"}))
     assert "Order limits: max quantity 100." in text
+
+
+# --- IB_GATEWAY_SETTINGS_DIR ------------------------------------------------------------
+
+
+def _messages(caplog: pytest.LogCaptureFixture) -> list[tuple[str, str]]:
+    return [
+        (r.levelname, r.getMessage()) for r in caplog.records if r.name == "ib_gateway_mcp.startup"
+    ]
+
+
+@pytest.fixture
+def read_only_dir(tmp_path: Path) -> Iterator[Path]:
+    """A settings directory with a launcher.log that this process cannot write to."""
+    if hasattr(os, "geteuid") and os.geteuid() == 0:
+        pytest.skip("root can write to any directory")
+    directory = tmp_path / "tws_settings"
+    directory.mkdir()
+    (directory / "launcher.log").write_text("", encoding="utf-8")
+    directory.chmod(0o555)
+    try:
+        yield directory
+    finally:
+        directory.chmod(0o755)
+
+
+async def test_a_good_settings_dir_is_named_once(
+    read_only_dir: Path, caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    gateway_log = GatewayLog(read_only_dir)
+    timeouts: list[float] = []
+    check = gateway_log.check_async
+
+    async def spy(timeout: float) -> list[str]:
+        timeouts.append(timeout)
+        return await check(timeout)
+
+    monkeypatch.setattr(gateway_log, "check_async", spy)
+    caplog.set_level(logging.INFO, logger="ib_gateway_mcp.startup")
+    assert await check_gateway_settings_dir(gateway_log) == []
+    assert timeouts == [GATEWAY_SETTINGS_CHECK_TIMEOUT]
+    assert _messages(caplog) == [
+        ("INFO", f"Reading the gateway's login phase from {read_only_dir}.")
+    ]
+
+
+@pytest.mark.parametrize(
+    ("setup", "expected"),
+    [
+        ("missing", ["cannot read the gateway settings directory"]),
+        ("empty", ["has no launcher.log", "TWS_SETTINGS_PATH", "mount it read-only"]),
+        ("writable", ["is writable by this server; mount it read-only"]),
+    ],
+)
+async def test_settings_dir_problems_are_warnings(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture, setup: str, expected: list[str]
+) -> None:
+    directory = tmp_path / "tws_settings"
+    if setup != "missing":
+        directory.mkdir()
+    if setup == "writable":
+        (directory / "launcher.log").write_text("", encoding="utf-8")
+    caplog.set_level(logging.INFO, logger="ib_gateway_mcp.startup")
+    problems = await check_gateway_settings_dir(GatewayLog(directory))
+    messages = _messages(caplog)
+    assert problems
+    assert all(level == "WARNING" for level, _ in messages)
+    assert [text for _, text in messages] == [f"IB_GATEWAY_SETTINGS_DIR: {p}." for p in problems]
+    text = " ".join(problems)
+    for part in expected:
+        assert part in text

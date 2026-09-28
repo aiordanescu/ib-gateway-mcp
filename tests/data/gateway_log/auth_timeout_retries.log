@@ -1,0 +1,65 @@
+2026-08-30 04:20:06.215 ERROR [AWT-EventQueue-0] - Too many failed login attempts. Please wait 55 seconds before attempting to re-login again.
+2026-08-30 04:21:04.394 INFO  [AWT-EventQueue-0] - Contacting server.example:4001 as user NOT PRINTED
+2026-08-30 04:21:04.395 INFO  [JTS-Login-110] - Starting launcher login thread
+2026-08-30 04:21:04.395 INFO  [JTS-Login-110] - LauncherLoginThread.runLoginWithUI()[hotBackupStrategy=ON,loginAttempt=1,socketDelay=20000].
+2026-08-30 04:21:04.396 INFO  [JTS-Login-110] - SPLASH Connecting to server
+2026-08-30 04:21:04.396 INFO  [JTS-Login-110] - ### startLogin startTime=1788043864395
+2026-08-30 04:21:04.396 INFO  [JTS-Login-110] - ### loginAttempt loginAttempt=1
+2026-08-30 04:21:04.396 INFO  [JTS-Login-110] - ### onSocketOpenStart socketOpenStart=1788043864396; endPoint=server.example; port=4001
+2026-08-30 04:21:04.460 INFO  [JTS-Login-110] - ### onSocketOpenEnd socketOpenEnd=1788043864460
+2026-08-30 04:21:04.462 INFO  [JTS-Login-110] - ### onNsMsg loginMessageReq=1788043864462; brandNewUser=false
+2026-08-30 04:21:04.656 INFO  [JTS-Login-110] - SPLASH Authenticating
+2026-08-30 04:21:04.724 INFO  [JTS-AuthDispatcherS9-114] - Received NS_AUTH_START: 1
+2026-08-30 04:21:04.724 INFO  [JTS-AuthDispatcherS9-114] - pwd time to expiry ms: 2311913336000 days: 26759
+2026-08-30 04:21:04.724 INFO  [JTS-AuthDispatcherS9-114] -  NS_AUTH_START version=52 pwd=1 soft=0 token(s)=[token=5, tokenSubtype=2, suffix=a[IB Key]] initialTokenType=PWD authenticationType=MARKET_DATA_CONNECTION identityHashcode=1
+2026-08-30 04:21:04.724 INFO  [JTS-AuthDispatcherS9-114] - Resetting session token (password auth)...
+2026-08-30 04:21:04.724 INFO  [JTS-AuthDispatcherS9-114] - Starting password Authentication
+2026-08-30 04:21:04.922 INFO  [JTS-AuthDispatcherS9-114] - Received AUTH_RESULT
+2026-08-30 04:21:04.922 INFO  [JTS-AuthDispatcherS9-114] - Passed pwd authentication.
+2026-08-30 04:21:24.466 INFO  [JTS-AuthTimeoutMonitorThread-CCP-115] - AuthTimeoutMonitor-CCP: Timeout!
+2026-08-30 04:21:24.466 INFO  [JTS-AuthTimeoutMonitorThread-CCP-115] - Disconnecting server.example:4001 (SSL) [disconnectDetails=DisconnectDetails[sessionID=9,endPoint=server.example:4001 (SSL),reason=NO_AUTH_RESPONSE,cause=null,systemMessage=null,keepSocketOpen=false]]...
+2026-08-30 04:21:24.467 ERROR [JTS-AuthTimeoutMonitorThread-CCP-115] - Authentication timeout
+2026-08-30 04:21:24.467 INFO  [JTS-AuthTimeoutMonitorThread-CCP-115] - SPLASH Attempt 1: network error, will retry in seconds
+2026-08-30 04:21:24.468 INFO  [JTS-DisconnectedS9-121] - IBGateway connection to ccp disconnected.
+2026-08-30 04:21:24.469 INFO  [JTS-Login-122] - Starting launcher login thread
+2026-08-30 04:21:24.469 INFO  [JTS-Login-122] - LauncherLoginThread.runLoginWithUI()[hotBackupStrategy=ON,loginAttempt=2,socketDelay=20000].
+2026-08-30 04:21:24.469 INFO  [JTS-Login-122] - SPLASH Attempt 2: connecting to server
+2026-08-30 04:21:24.469 INFO  [JTS-Login-122] - SPLASH Attempt 2: connecting to server
+2026-08-30 04:21:24.469 INFO  [JTS-Login-122] - ### startLogin startTime=1788043884468
+2026-08-30 04:21:24.469 INFO  [JTS-Login-122] - ### loginAttempt loginAttempt=2
+2026-08-30 04:21:24.469 INFO  [JTS-Login-122] - ### onSocketOpenStart socketOpenStart=1788043884469; endPoint=server.example; port=4001
+2026-08-30 04:21:24.533 INFO  [JTS-Login-122] - ### onSocketOpenEnd socketOpenEnd=1788043884533
+2026-08-30 04:21:24.534 INFO  [JTS-Login-122] - ### onNsMsg loginMessageReq=1788043884534; brandNewUser=false
+2026-08-30 04:21:24.728 INFO  [JTS-Login-122] - SPLASH Attempt 2: Authenticating
+2026-08-30 04:21:24.795 INFO  [JTS-AuthDispatcherS10-125] - Received NS_AUTH_START: 1
+2026-08-30 04:21:24.795 INFO  [JTS-AuthDispatcherS10-125] - pwd time to expiry ms: 2311913316000 days: 26759
+2026-08-30 04:21:24.795 INFO  [JTS-AuthDispatcherS10-125] -  NS_AUTH_START version=52 pwd=1 soft=0 token(s)=[token=5, tokenSubtype=2, suffix=a[IB Key]] initialTokenType=PWD authenticationType=MARKET_DATA_CONNECTION identityHashcode=1
+2026-08-30 04:21:24.795 INFO  [JTS-AuthDispatcherS10-125] - Resetting session token (password auth)...
+2026-08-30 04:21:24.795 INFO  [JTS-AuthDispatcherS10-125] - Starting password Authentication
+2026-08-30 04:21:24.992 INFO  [JTS-AuthDispatcherS10-125] - Received AUTH_RESULT
+2026-08-30 04:21:24.992 INFO  [JTS-AuthDispatcherS10-125] - Passed pwd authentication.
+2026-08-30 04:21:44.539 INFO  [JTS-AuthTimeoutMonitorThread-CCP-126] - AuthTimeoutMonitor-CCP: Timeout!
+2026-08-30 04:21:44.540 INFO  [JTS-AuthTimeoutMonitorThread-CCP-126] - Disconnecting server.example:4001 (SSL) [disconnectDetails=DisconnectDetails[sessionID=10,endPoint=server.example:4001 (SSL),reason=NO_AUTH_RESPONSE,cause=null,systemMessage=null,keepSocketOpen=false]]...
+2026-08-30 04:21:44.540 ERROR [JTS-AuthTimeoutMonitorThread-CCP-126] - Authentication timeout
+2026-08-30 04:21:44.541 INFO  [JTS-AuthTimeoutMonitorThread-CCP-126] - SPLASH Attempt 2: network error, will retry in seconds
+2026-08-30 04:21:44.541 INFO  [JTS-DisconnectedS10-132] - IBGateway connection to ccp disconnected.
+2026-08-30 04:21:44.542 INFO  [JTS-Login-133] - Starting launcher login thread
+2026-08-30 04:21:44.542 INFO  [JTS-Login-133] - LauncherLoginThread.runLoginWithUI()[hotBackupStrategy=ON,loginAttempt=3,socketDelay=30000].
+2026-08-30 04:21:44.542 INFO  [JTS-Login-133] - SPLASH Attempt 3: connecting to server
+2026-08-30 04:21:44.542 INFO  [JTS-Login-133] - SPLASH Attempt 3: connecting to server
+2026-08-30 04:21:44.542 INFO  [JTS-Login-133] - ### startLogin startTime=1788043904541
+2026-08-30 04:21:44.542 INFO  [JTS-Login-133] - ### loginAttempt loginAttempt=3
+2026-08-30 04:21:44.543 INFO  [JTS-Login-133] - ### onSocketOpenStart socketOpenStart=1788043904543; endPoint=server.example; port=4001
+2026-08-30 04:21:44.607 INFO  [JTS-Login-133] - ### onSocketOpenEnd socketOpenEnd=1788043904607
+2026-08-30 04:21:44.609 INFO  [JTS-Login-133] - ### onNsMsg loginMessageReq=1788043904609; brandNewUser=false
+2026-08-30 04:21:44.803 INFO  [JTS-Login-133] - SPLASH Attempt 3: Authenticating
+2026-08-30 04:21:44.869 INFO  [JTS-AuthDispatcherS11-136] - Received NS_AUTH_START: 1
+2026-08-30 04:21:44.869 INFO  [JTS-AuthDispatcherS11-136] - pwd time to expiry ms: 2311913296000 days: 26759
+2026-08-30 04:21:44.869 INFO  [JTS-AuthDispatcherS11-136] -  NS_AUTH_START version=52 pwd=1 soft=0 token(s)=[token=5, tokenSubtype=2, suffix=a[IB Key]] initialTokenType=PWD authenticationType=MARKET_DATA_CONNECTION identityHashcode=1
+2026-08-30 04:21:44.869 INFO  [JTS-AuthDispatcherS11-136] - Resetting session token (password auth)...
+2026-08-30 04:21:44.869 INFO  [JTS-AuthDispatcherS11-136] - Starting password Authentication
+2026-08-30 04:21:45.063 INFO  [JTS-AuthDispatcherS11-136] - Received AUTH_RESULT
+2026-08-30 04:21:45.063 INFO  [JTS-AuthDispatcherS11-136] - Passed pwd authentication.
+2026-08-30 04:22:00.940 INFO  [JTS-AuthDispatcherS11-136] - dsaViaSms=true
+2026-08-30 04:22:00.940 INFO  [JTS-AuthDispatcherS11-136] - Received CHALLENGE
+2026-08-30 04:22:00.940 INFO  [JTS-AuthDispatcherS11-136] - AuthTimeoutMonitor-CCP: pause

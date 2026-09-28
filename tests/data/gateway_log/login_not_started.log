@@ -1,0 +1,27 @@
+2026-08-27 06:56:42.182 INFO  [JTS-Main] - ------------------------------- IB GATEWAY RESTART --------------------------------
+2026-08-27 06:56:42.295 INFO  [JTS-Main] - Setting custom timezone: Asia/Kolkata
+2026-08-27 06:56:42.897 INFO  [JTS-Main] - Build 10.50.1e, Aug 25, 2026 4:05:30 PM
+2026-08-27 06:56:43.433 INFO  [AWT-EventQueue-0] - Default timezone:Asia/Kolkata
+2026-08-27 06:56:43.458 INFO  [AWT-EventQueue-0] - Started on 20260827-01:26:43
+2026-08-27 06:56:43.458 INFO  [AWT-EventQueue-0] - Default timezone:Asia/Kolkata name:India Standard Time dst:0
+2026-08-27 06:56:43.591 INFO  [JTS-AuthDispatcherS1-7] - Disconnecting server.example:4001 (SSL) [disconnectDetails=DisconnectDetails[sessionID=1,endPoint=server.example:4001 (SSL),reason=DISCONNECT_BY_DESIGN,cause=null,systemMessage=null,keepSocketOpen=false]]...
+2026-08-27 06:56:43.593 INFO  [JTS-MISC URLsListenerS1-6] - Socket or stream for connection server.example:4001 (SSL) was closed by another thread.
+2026-08-27 06:56:43.593 INFO  [JTS-MISC URLsListenerS1-6] - Listener thread terminating [sessionID=1] [seen=1589,totalShifted=1589,moreAvailable=0]
+2026-08-27 06:56:43.594 INFO  [JTS-AuthDispatcherS1-7] - Dispatcher thread terminating [sessionID=1,interrupted=true]...
+2026-08-27 06:56:43.594 INFO  [JTS-AuthResponseMonitor-8] - Terminating auth response monitor thread
+2026-08-27 06:56:43.669 INFO  [AWT-EventQueue-0] - OvernightManager.dayInit: new values: dayOfTheWeek: 5 (Thu), YYYYMMofToday: 202608, YYYYMMDDofToday: 20260827, m_todayDate: 20260827, dueToChangeInTimezone: false
+2026-08-27 06:56:43.669 INFO  [AWT-EventQueue-0] - Saving peer in jts.ini [hostPort=server.example:4001,context=IBMiscUrl.miscUrlsMessage]...
+2026-08-27 06:56:47.209 INFO  [JTS-DeadlockMonitor-2] - Memory:total=786,432KB free=748,003KB HeapUsage: Max=786,432KB used=37,903KB committed=59,392KB NonHeapUsage: Max=0KB used=82,106KB committed=84,992KB
+2026-08-27 06:56:47.210 WARN  [JTS-DeadlockMonitor-2] - instance of control is not created yet
+2026-08-27 06:56:48.219 INFO  [JTS-DeadlockMonitor-2] - CPU:cur=0.03% avg=0.03% 30 min avg=0.03% 10 min avg=0.03% 5 min avg=0.03% 1 min avg=0.03%
+GC:called=14 times CPU used=0.01%
+Finalizer:cur=0.00% avg=0.00% 30 min avg=0.00% 10 min avg=0.00% 5 min avg=0.00% 1 min avg=0.00%
+Threads Count:curr live=29 curr daemon=18
+2026-08-27 06:59:43.440 INFO  [JTS-GstatMessageMgr-10] - Sending a request to GSTAT [url=https://server.example/v1/gstat//bulletins,data='{"p":"10501e","t":"Maintenance","tz":"Asia/Kolkata","format":"webapp","theme":"dark","fontSize":"12px","lang":"en"}']...
+2026-08-27 06:59:43.751 INFO  [JTS-GstatMessageMgr-10] - Received response [errorCode=204,contentLen=-1].
+2026-08-27 06:59:43.874 INFO  [JavaFX Application Thread] - GstatMessagePanel: setup web app is done
+2026-08-27 07:01:47.228 INFO  [JTS-DeadlockMonitor-2] - Memory:total=786,432KB free=753,630KB HeapUsage: Max=786,432KB used=32,065KB committed=59,392KB NonHeapUsage: Max=0KB used=89,485KB committed=92,672KB
+2026-08-27 07:01:47.229 WARN  [JTS-DeadlockMonitor-2] - instance of control is not created yet
+2026-08-27 07:01:48.230 INFO  [JTS-DeadlockMonitor-2] - CPU:cur=0.02% avg=0.03% 30 min avg=0.03% 10 min avg=0.03% 5 min avg=0.03% 1 min avg=0.01%
+GC:called=15 times CPU used=0.00%
+Finalizer:cur=0.00% avg=0.00% 30 min avg=0.00% 10 min avg=0.00% 5 min avg=0.00% 1 min avg=0.00%

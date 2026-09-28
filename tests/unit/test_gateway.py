@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from collections.abc import Callable
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock
 
@@ -15,6 +17,7 @@ from ib_async.wrapper import RequestError
 from ib_gateway_mcp import Gateway as ExportedGateway
 from ib_gateway_mcp import Settings as ExportedSettings
 from ib_gateway_mcp import __version__
+from ib_gateway_mcp._gateway_log import GatewayLog
 from ib_gateway_mcp.config import Settings
 from ib_gateway_mcp.errors import IbApiError, NotConnectedError, RequestTimeoutError
 from ib_gateway_mcp.gateway import Gateway
@@ -101,6 +104,32 @@ async def test_context_manager_starts_and_stops(settings: Settings, fake_ib: Mag
     assert not fake_ib.isConnected()
     with pytest.raises(NotConnectedError):
         _ = gw.ib
+
+
+def test_gateway_log_follows_the_setting(
+    settings_factory: Callable[..., Settings], fake_ib: MagicMock, tmp_path: Path
+) -> None:
+    assert Gateway(settings_factory(), ib_factory=lambda: fake_ib).gateway_log is None
+    gw = Gateway(settings_factory(gateway_settings_dir=tmp_path), ib_factory=lambda: fake_ib)
+    assert isinstance(gw.gateway_log, GatewayLog)
+    assert gw.gateway_log.directory == tmp_path
+
+
+async def test_start_checks_the_settings_dir_but_never_fails_on_it(
+    settings_factory: Callable[..., Settings],
+    fake_ib: MagicMock,
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    caplog.set_level(logging.INFO, logger="ib_gateway_mcp.startup")
+    missing = tmp_path / "missing"
+    gw = Gateway(settings_factory(gateway_settings_dir=missing), ib_factory=lambda: fake_ib)
+    async with gw:
+        assert gw.health().state is ConnectionState.CONNECTED
+    warnings = [r.getMessage() for r in caplog.records if r.levelname == "WARNING"]
+    assert any(
+        m.startswith("IB_GATEWAY_SETTINGS_DIR: cannot read") and str(missing) in m for m in warnings
+    )
 
 
 async def test_start_can_skip_waiting(settings: Settings, fake_ib: MagicMock) -> None:

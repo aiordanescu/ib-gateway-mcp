@@ -52,6 +52,7 @@ from ib_gateway_mcp.startup import check_audit_log, limits_summary
 
 __all__ = [
     "HEALTH_PATH",
+    "INSTRUCTIONS_MAX_CHARS",
     "MCP_PATH",
     "READY_PATH",
     "SERVER_NAME",
@@ -79,13 +80,28 @@ class _GatewayHolder:
         self.gateway = gateway
 
 
+INSTRUCTIONS_MAX_CHARS = 2048
+"""Longest instructions some clients show in full (Claude Code cuts them here)."""
+
+_LIMITS_CUT = " ... (cut short; a preview names any limit an order breaks)."
+
+
 def build_instructions(settings: Settings, toolsets: frozenset[str]) -> str:
-    """Summarize the enabled toolsets and the safety model for the model."""
+    """Summarize the enabled toolsets and the safety model for the model.
+
+    The first line stands alone (some clients show only it, cut to 250 characters), and
+    the whole text stays within :data:`INSTRUCTIONS_MAX_CHARS`: the order limits come last
+    and are cut short when long allowlists would pass it.
+    """
     parts = [
-        "Tools for an Interactive Brokers gateway (TWS API).",
+        "Interactive Brokers (IBKR) tools over an IB Gateway (TWS API) connection. If a call "
+        "fails with not_connected or request_timeout, call get_health to see whether the "
+        "gateway is down and what is known about why.",
         f"Enabled toolsets: {', '.join(sorted(toolsets))}.",
-        "If a call fails with not_connected or times out, call get_health: it says whether the "
-        "gateway is down, logged out, waiting on 2FA, or cut off from IBKR.",
+        "get_health's state says whether the connection works; not_accepting alone doesn't "
+        "say why. Relay its hint; unless the hint or login_state names a cause, report "
+        "last_disconnect_at and don't guess one such as 2FA. Never restart the gateway or "
+        "this server yourself: the operator does.",
         "Account-scoped tools take an optional account; without one they use the default "
         "account. list_accounts shows which accounts are allowed.",
         "Prices and sizes that IBKR does not report are null, never zero.",
@@ -94,22 +110,30 @@ def build_instructions(settings: Settings, toolsets: frozenset[str]) -> str:
         parts.append(
             "subscribe_* tools return a subscription_id: read it with get_subscription_data, "
             "stop it with unsubscribe, see all with list_subscriptions. A subscription not "
-            f"read for {settings.subscription_idle_ttl:g} seconds is cancelled."
+            f"read for {settings.subscription_idle_ttl:g} seconds is cancelled. The market "
+            "data type (set_market_data_type) applies to every client of this server and is "
+            "kept across gateway reconnects."
         )
-    if "orders" in toolsets:
-        confirm = (
-            " Live orders also need IBKR_MCP_ALLOW_LIVE and, while IBKR_MCP_LIVE_CONFIRM is on, "
-            "a human confirmation that the client shows; you cannot confirm on the user's behalf."
-        )
-        parts.append(
-            "Orders are two-step: a preview_* tool runs a what-if check and returns a token; "
-            f"submit_order(token) places exactly that order. Tokens are single-use and expire "
-            f"after {settings.token_ttl} seconds." + confirm
-        )
-        parts.append(limits_summary(settings))
-    else:
+    if "orders" not in toolsets:
         parts.append("Order tools are not enabled on this server.")
-    return "\n".join(parts)
+        return "\n".join(parts)
+    check = "get_order_status or get_open_orders" if "account" in toolsets else "get_order_status"
+    parts.append(
+        "Orders are two-step: a preview_* tool runs a what-if check and returns a token; "
+        "submit_order(token) places exactly that order. Tokens are single-use and expire "
+        f"after {settings.token_ttl} seconds. submit_order reports the first status only; "
+        "confirm fills with get_order_status. If a submit or cancel fails or times out, "
+        f"check {check} before trying again: the order may have reached IBKR. Live orders "
+        "also need IBKR_MCP_ALLOW_LIVE and, while IBKR_MCP_LIVE_CONFIRM is on, a human "
+        "confirmation that the client shows; you cannot confirm on the user's behalf."
+    )
+    text = "\n".join(parts)
+    limits = limits_summary(settings)
+    room = INSTRUCTIONS_MAX_CHARS - len(text) - 1  # the newline before the limits
+    if len(limits) > room:  # cut at a word boundary, then say so
+        head = limits[: room - len(_LIMITS_CUT)].rsplit(" ", 1)[0]
+        limits = head.rstrip(" ,;.") + _LIMITS_CUT
+    return f"{text}\n{limits}"
 
 
 @functools.cache

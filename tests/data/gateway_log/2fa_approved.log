@@ -1,0 +1,57 @@
+2026-08-30 00:40:58.441 INFO  [JTS-Main] - ------------------------------- IB GATEWAY RESTART --------------------------------
+2026-08-30 00:40:58.549 INFO  [JTS-Main] - Setting custom timezone: Asia/Kolkata
+2026-08-30 00:40:59.143 INFO  [JTS-Main] - Build 10.50.1e, Aug 25, 2026 4:05:30 PM
+2026-08-30 00:40:59.645 INFO  [AWT-EventQueue-0] - Default timezone:Asia/Kolkata
+2026-08-30 00:40:59.673 INFO  [AWT-EventQueue-0] - Started on 20260829-19:10:59
+2026-08-30 00:40:59.673 INFO  [AWT-EventQueue-0] - Default timezone:Asia/Kolkata name:India Standard Time dst:0
+2026-08-30 00:40:59.913 INFO  [JTS-AuthDispatcherS1-7] - Disconnecting server.example:4001 (SSL) [disconnectDetails=DisconnectDetails[sessionID=1,endPoint=server.example:4001 (SSL),reason=DISCONNECT_BY_DESIGN,cause=null,systemMessage=null,keepSocketOpen=false]]...
+2026-08-30 00:40:59.980 INFO  [AWT-EventQueue-0] - OvernightManager.dayInit: new values: dayOfTheWeek: 1 (Sun), YYYYMMofToday: 202608, YYYYMMDDofToday: 20260830, m_todayDate: 20260830, dueToChangeInTimezone: false
+2026-08-30 00:41:00.060 INFO  [AWT-EventQueue-0] - Stopping GstatMessageMgr...
+2026-08-30 00:41:00.193 INFO  [AWT-EventQueue-0] - Contacting server.example:4001 as user NOT PRINTED
+2026-08-30 00:41:00.208 INFO  [JTS-Login-14] - Starting launcher login thread
+2026-08-30 00:41:00.208 INFO  [JTS-Login-14] - LauncherLoginThread.runLoginWithUI()[hotBackupStrategy=ON,loginAttempt=1,socketDelay=20000].
+2026-08-30 00:41:00.208 INFO  [JTS-Login-14] - SPLASH Connecting to server
+2026-08-30 00:41:00.209 INFO  [JTS-Login-14] - ### startLogin startTime=1788030660207
+2026-08-30 00:41:00.209 INFO  [JTS-Login-14] - ### loginAttempt loginAttempt=1
+2026-08-30 00:41:00.210 INFO  [JTS-Login-14] - ### onSocketOpenStart socketOpenStart=1788030660209; endPoint=server.example; port=4001
+2026-08-30 00:41:00.278 INFO  [JTS-Login-14] - ### onSocketOpenEnd socketOpenEnd=1788030660278
+2026-08-30 00:41:00.290 INFO  [JTS-Login-14] - ### onNsMsg loginMessageReq=1788030660289; brandNewUser=false
+2026-08-30 00:41:00.486 INFO  [JTS-Login-14] - SPLASH Authenticating
+2026-08-30 00:41:00.562 INFO  [JTS-AuthDispatcherS2-18] - Received NS_AUTH_START: 1
+2026-08-30 00:41:00.563 INFO  [JTS-AuthDispatcherS2-18] - pwd time to expiry ms: 2311926540000 days: 26759
+2026-08-30 00:41:00.563 INFO  [JTS-AuthDispatcherS2-18] -  NS_AUTH_START version=52 pwd=1 soft=0 token(s)=[token=5, tokenSubtype=2, suffix=a[IB Key]] initialTokenType=PWD authenticationType=MARKET_DATA_CONNECTION identityHashcode=1
+2026-08-30 00:41:00.563 INFO  [JTS-AuthDispatcherS2-18] - Resetting session token (password auth)...
+2026-08-30 00:41:00.564 INFO  [JTS-AuthDispatcherS2-18] - Starting password Authentication
+2026-08-30 00:41:00.761 INFO  [JTS-AuthDispatcherS2-18] - Received AUTH_RESULT
+2026-08-30 00:41:00.761 INFO  [JTS-AuthDispatcherS2-18] - Passed pwd authentication.
+2026-08-30 00:41:00.827 INFO  [JTS-AuthDispatcherS2-18] - dsaViaSms=true
+2026-08-30 00:41:00.827 INFO  [JTS-AuthDispatcherS2-18] - Received CHALLENGE
+2026-08-30 00:41:00.827 INFO  [JTS-AuthDispatcherS2-18] - AuthTimeoutMonitor-CCP: pause
+2026-08-30 00:41:03.464 INFO  [JTS-DeadlockMonitor-2] - Memory:total=786,432KB free=741,216KB HeapUsage: Max=786,432KB used=43,983KB committed=58,368KB NonHeapUsage: Max=0KB used=91,040KB committed=92,864KB
+2026-08-30 00:41:03.464 WARN  [JTS-DeadlockMonitor-2] - instance of control is not created yet
+2026-08-30 00:41:04.474 INFO  [JTS-DeadlockMonitor-2] - CPU:cur=0.03% avg=0.03% 30 min avg=0.03% 10 min avg=0.03% 5 min avg=0.03% 1 min avg=0.03%
+GC:called=15 times CPU used=0.01%
+Finalizer:cur=0.00% avg=0.00% 30 min avg=0.00% 10 min avg=0.00% 5 min avg=0.00% 1 min avg=0.00%
+Threads Count:curr live=33 curr daemon=19
+2026-08-30 00:41:20.829 INFO  [JTS-AuthDispatcherS2-18] - SPLASH 20068 step 2 AuthDispatcher.processDataItr
+2026-08-30 00:41:20.829 INFO  [JTS-AuthDispatcherS2-18] - Received NS_TEST_REQUEST
+2026-08-30 00:41:20.830 INFO  [JTS-AuthDispatcherS2-18] - Sent NS_HEART_BEAT:#%#%0000MISC52;531;20260829-19:11:20;
+2026-08-30 00:41:40.896 INFO  [JTS-AuthDispatcherS2-18] - SPLASH 20067 step 2 AuthDispatcher.processDataItr
+2026-08-30 00:41:40.896 INFO  [JTS-AuthDispatcherS2-18] - Received NS_TEST_REQUEST
+2026-08-30 00:41:40.897 INFO  [JTS-AuthDispatcherS2-18] - Sent NS_HEART_BEAT:#%#%0000MISC52;531;20260829-19:11:40;
+2026-08-30 00:42:00.964 INFO  [JTS-AuthDispatcherS2-18] - SPLASH 20067 step 2 AuthDispatcher.processDataItr
+2026-08-30 00:42:00.965 INFO  [JTS-AuthDispatcherS2-18] - Received NS_TEST_REQUEST
+2026-08-30 00:42:00.965 INFO  [JTS-AuthDispatcherS2-18] - Sent NS_HEART_BEAT:#%#%0000MISC52;531;20260829-19:12:00;
+2026-08-30 00:42:14.355 INFO  [JTS-AuthDispatcherS2-18] - Received Finish by SDSA
+2026-08-30 00:42:14.355 INFO  [JTS-AuthDispatcherS2-18] - Finished authentication.
+2026-08-30 00:42:14.355 INFO  [JTS-AuthDispatcherS2-18] - AuthTimeoutMonitor-CCP: resume, idleTime=73528
+2026-08-30 00:42:14.359 INFO  [JTS-AuthDispatcherS2-18] - Authentication completed.
+2026-08-30 00:42:14.360 INFO  [JTS-AuthDispatcherS2-18] - ### onAuthenticationCompleted tokenProtocol=5; authenticated=true
+2026-08-30 00:42:14.362 INFO  [JTS-AuthDispatcherS2-18] - Received CCP connect features: [SIGNPPR, TST, ONELOGON].
+2026-08-30 00:42:14.363 INFO  [JTS-AuthDispatcherS2-18] - CCP sent paperUser NOT PRINTED for prodUser NOT PRINTED
+2026-08-30 00:42:14.364 INFO  [JTS-AuthDispatcherS2-18] - Daily auto-restart is enabled.
+2026-08-30 00:42:14.364 INFO  [JTS-AuthDispatcherS2-18] - Converting SOFT token to TST [token=00000XXXXX..,prefix=00000000|00:00:5E:00:53:01TST]...
+2026-08-30 00:42:14.429 INFO  [JTS-AuthDispatcherS2-18] - Received NS_FIX_START
+2026-08-30 00:42:14.431 INFO  [JTS-PostAuthenticateS2-26] - Authentication complete
+2026-08-30 00:42:14.438 INFO  [JTS-PostAuthenticateS2-26] - performLogSwitch() [force=false]
+2026-08-30 00:42:14.441 INFO  [JTS-PostAuthenticateS2-26] - Switching to a new encrypted log...

@@ -5,7 +5,9 @@ from __future__ import annotations
 import logging
 import time
 from importlib.metadata import PackageNotFoundError, version
+from typing import TYPE_CHECKING
 
+from ib_gateway_mcp._gateway_log import DETAILS, describe, is_silent
 from ib_gateway_mcp._util import clean_str, ensure_utc, utc_now
 from ib_gateway_mcp._version import __version__
 from ib_gateway_mcp.connection import ConnectionManager
@@ -14,16 +16,45 @@ from ib_gateway_mcp.models.ops import (
     AccountInfo,
     AccountList,
     ConnectionInfo,
+    ConnectionState,
     HealthProbe,
     HealthReport,
+    LoginPhase,
+    LoginState,
     ServerTime,
     UserInfo,
 )
 from ib_gateway_mcp.services.base import BaseService
 
-__all__ = ["OpsService"]
+if TYPE_CHECKING:
+    from ib_gateway_mcp.gateway import Gateway
+
+__all__ = [
+    "LOGIN_STATE_MISMATCH",
+    "LOGIN_STATE_TIMEOUT",
+    "OpsService",
+]
 
 logger = logging.getLogger(__name__)
+
+LOGIN_STATE_TIMEOUT = 5.0
+"""Seconds ``get_health`` waits for the gateway's launcher.log to be read."""
+LOGIN_STATE_MISMATCH = (
+    "launcher.log does not match the connected gateway; check IB_GATEWAY_SETTINGS_DIR"
+)
+"""``LoginState.detail`` when the log shows no login, or went silent before one, while the
+API session is up."""
+HINT_STILL_RETRYING = "This server keeps retrying the connection in the background."
+HINT_REPORT_THE_OUTAGE = (
+    "Report since when it has been down (last_disconnect_at; if this server started during "
+    "the outage, that is its start time and the outage may be older) rather than guessing a "
+    "cause; setting IB_GATEWAY_SETTINGS_DIR lets get_health report the gateway's login phase."
+)
+_UP_STATES = frozenset({ConnectionState.CONNECTED, ConnectionState.CONNECTIVITY_LOST})
+# Phases that fit an API session that is up: a login, or a log that can't tell (unreadable,
+# no gateway start in it). A log that went silent before a login (is_silent) doesn't fit:
+# the logged-in gateway would have logged its login there.
+_CONSISTENT_WHILE_UP = frozenset({LoginPhase.LOGGED_IN, LoginPhase.UNKNOWN})
 
 
 def _package_version(name: str) -> str:
@@ -36,11 +67,16 @@ def _package_version(name: str) -> str:
 class OpsService(BaseService):
     """Health and housekeeping for the gateway connection."""
 
+    def __init__(self, gateway: Gateway) -> None:
+        super().__init__(gateway)
+        self._mismatch_logged = False
+
     def health(self) -> HealthReport:
         """Return the connection's health. Works whether or not the gateway is up.
 
         Adds what the connection alone does not know: the order circuit breaker and the
-        subscription usage.
+        subscription usage. Synchronous and free of I/O (``/healthz`` and ``/readyz`` use
+        it), so ``login_state`` stays null: :meth:`health_report` fills it.
         """
         breaker = self.safety.breaker
         return self.connection.health().model_copy(
@@ -53,16 +89,89 @@ class OpsService(BaseService):
             }
         )
 
+    async def login_state(self) -> LoginState | None:
+        """The gateway's login phase from its launcher.log; None without the setting.
+
+        Reads ``IB_GATEWAY_SETTINGS_DIR`` off the event loop, waiting at most
+        :data:`LOGIN_STATE_TIMEOUT` seconds. Never raises: whatever goes wrong is an
+        ``unknown`` phase whose ``detail`` says why.
+        """
+        gateway_log = self.gateway.gateway_log
+        if gateway_log is None:
+            return None
+        try:
+            return await gateway_log.read_async(LOGIN_STATE_TIMEOUT)
+        except Exception as exc:  # never raise from a health check
+            logger.warning("Reading the gateway's login phase failed (%s).", type(exc).__name__)
+            return LoginState(phase=LoginPhase.UNKNOWN, detail=DETAILS["failed"])
+
     async def health_report(self, *, probe: bool = False) -> HealthReport:
-        """Return :meth:`health`, optionally with a live round trip to the gateway.
+        """Return :meth:`health`, with the login phase and optionally a live round trip.
 
         With ``probe`` the gateway is asked for its time (as :meth:`server_time` does),
         which proves the socket carries requests right now; the outcome lands in
         ``HealthReport.probe``. ``round_trip_ms`` leaves out the spacing wait between
-        clock requests (see :meth:`ConnectionManager.request_current_time`). Never raises.
+        clock requests (see :meth:`ConnectionManager.request_current_time`).
+
+        With ``IB_GATEWAY_SETTINGS_DIR`` set, ``login_state`` holds :meth:`login_state`.
+        When the gateway refused the connection without a reason
+        (:attr:`ConnectionManager.refusal_unexplained`), the hint then words that phase;
+        without the setting, it asks to report the outage window rather than guess a
+        cause. Every other state keeps its hint. While the session is up, a log that shows
+        another phase than logged_in, or went silent before a login, can't be this
+        gateway's: ``login_state`` is then unknown with :data:`LOGIN_STATE_MISMATCH`.
+        Never raises.
         """
-        if not probe:
-            return self.health()
+        outcome = await self._probe() if probe else None
+        login = await self.login_state()
+        # Built last: the probe may have changed the state (the socket turned out dead).
+        report = self.health()
+        if outcome is not None:
+            report = report.model_copy(update={"probe": outcome})
+        return self._explain(report, login)
+
+    def _explain(self, report: HealthReport, login: LoginState | None) -> HealthReport:
+        """Attach the login phase and word the hint of an unexplained refusal."""
+        unexplained = (
+            report.state is ConnectionState.NOT_ACCEPTING and self.connection.refusal_unexplained
+        )
+        if login is None:
+            if unexplained and report.hint:
+                return report.model_copy(update={"hint": f"{report.hint} {HINT_REPORT_THE_OUTAGE}"})
+            return report
+        if report.state in _UP_STATES and (
+            login.phase not in _CONSISTENT_WHILE_UP or is_silent(login)
+        ):
+            # The API session is up, so the gateway is logged in: this log is not its log.
+            if not self._mismatch_logged:
+                self._mismatch_logged = True
+                shows = (
+                    "a login that went silent"
+                    if is_silent(login)
+                    else f"the login phase {login.phase.value}"
+                )
+                logger.warning(
+                    "The gateway's launcher.log shows %s while the API session is up; "
+                    "IB_GATEWAY_SETTINGS_DIR probably names another gateway's directory.",
+                    shows,
+                )
+            login = LoginState(
+                phase=LoginPhase.UNKNOWN,
+                detail=LOGIN_STATE_MISMATCH,
+                log_updated_at=login.log_updated_at,
+            )
+        update: dict[str, object] = {"login_state": login}
+        if unexplained:
+            phase = describe(login, utc_now())
+            if login.phase is LoginPhase.UNKNOWN and report.hint:
+                # The log can't tell, so the generic hint keeps what the API does say.
+                update["hint"] = f"{report.hint} {phase}"
+            else:
+                update["hint"] = f"{phase} {HINT_STILL_RETRYING}"
+        return report.model_copy(update=update)
+
+    async def _probe(self) -> HealthProbe:
+        """Ask the gateway for its time and report how it went. Never raises."""
         started = time.perf_counter()
         try:
             answer = await self.server_time()
@@ -80,8 +189,7 @@ class OpsService(BaseService):
                 round_trip_ms=round(round_trip * 1000, 1),
                 server_time=answer.server_time,
             )
-        # The probe may have changed the state (e.g. the socket turned out to be dead).
-        return self.health().model_copy(update={"probe": outcome})
+        return outcome
 
     async def server_time(self) -> ServerTime:
         """Ask the gateway for its clock and compare it with this machine's.

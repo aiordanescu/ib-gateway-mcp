@@ -20,7 +20,8 @@ In scope, for example:
 - getting around the live-trading switch, the human confirmation of live actions, the order limits, the rate limit or the circuit breaker;
 - reaching the HTTP transport's tools without the bearer token;
 - text the model controls passing for the server's own words in a human confirmation prompt;
-- secrets (bearer tokens, preview tokens, credentials) leaking into logs, errors, the audit log or tool output.
+- secrets (bearer tokens, preview tokens, credentials) leaking into logs, errors, the audit log or tool output;
+- content of the gateway's `launcher.log` (addresses, session ids, token fragments, any log text) reaching this server's logs, errors or tool output, which should carry only the parsed login phase, times and counts; or the server opening anything in the gateway's settings directory besides `launcher.log` and its rotated copies (through a symlink, for example).
 
 Out of scope: problems in IB Gateway or ib-gateway-docker themselves (report those upstream), and anything that needs the attacker to control the machine the server runs on.
 
@@ -32,4 +33,5 @@ The rails assume that the model reaches the gateway only through this server: th
 - Do not publish the gateway's own API port (4001-4004) on a host where an agent runs: it bypasses every rail of this server.
 - Start on a paper login. Enable live trading (`IBKR_MCP_ALLOW_LIVE=true`) only with order limits set (with `IBKR_MCP_ALLOWED_CURRENCIES` next to `IBKR_MCP_MAX_NOTIONAL`), and keep `IBKR_MCP_LIVE_CONFIRM=true`. The server logs a warning at start-up for each risky combination.
 - For a deployment that must never trade, also turn on the gateway's own Read-Only API setting (`READ_ONLY_API=yes` in ib-gateway-docker).
+- `IB_GATEWAY_SETTINGS_DIR` gives the server read access to the gateway's settings directory, which holds more than the login phase: `launcher.log` has, among other things, the host's local and public IP addresses, its MAC address, IBKR session ids, masked session-token prefixes and hashes, a log upload key and ad ids that encode the login's user identifier. During the daily auto-restart the directory also briefly holds a file with the session token the restart reuses. Mount it read-only and into this server only (the server warns at start-up when it could write to it), and never mount `/home/ibgateway` or IBC's directory, which can hold the password.
 - Set `IBKR_MCP_AUDIT_LOG` and keep the file; it also keeps an open circuit breaker open across restarts. The server refuses to start with write tools when the file cannot be written, but a write that fails later is only logged at ERROR and does not stop the order, so alert on those log lines.

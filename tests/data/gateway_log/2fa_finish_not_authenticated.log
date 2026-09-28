@@ -1,0 +1,29 @@
+2026-07-19 15:55:26.799 INFO  [JTS-AuthDispatcherS2-18] - Received NS_TEST_REQUEST
+2026-07-19 15:55:26.800 INFO  [JTS-AuthDispatcherS2-18] - Sent NS_HEART_BEAT:#%#%0000MISC51;531;20260719-10:25:26;
+2026-07-19 15:55:46.865 INFO  [JTS-AuthDispatcherS2-18] - SPLASH 20065 step 2 AuthDispatcher.processDataItr
+2026-07-19 15:55:46.865 INFO  [JTS-AuthDispatcherS2-18] - Received NS_TEST_REQUEST
+2026-07-19 15:55:46.865 INFO  [JTS-AuthDispatcherS2-18] - Sent NS_HEART_BEAT:#%#%0000MISC51;531;20260719-10:25:46;
+2026-07-19 15:56:06.930 INFO  [JTS-AuthDispatcherS2-18] - SPLASH 20066 step 2 AuthDispatcher.processDataItr
+2026-07-19 15:56:23.540 INFO  [JTS-AuthDispatcherS2-18] - Received Finish by SDSA
+2026-07-19 15:56:23.540 INFO  [JTS-AuthDispatcherS2-18] - Finished authentication.
+2026-07-19 15:56:23.540 INFO  [JTS-AuthDispatcherS2-18] - Authentication completed.
+2026-07-19 15:56:23.540 INFO  [JTS-CCPListenerS2-17] - Socket for connection server.example:4001 (SSL) was closed by peer.
+2026-07-19 15:56:23.540 INFO  [JTS-AuthDispatcherS2-18] - ### onAuthenticationCompleted tokenProtocol=5; authenticated=false
+2026-07-19 15:56:23.642 INFO  [JTS-Fuse-ClosedSocket-25] - Disconnecting server.example:4001 (SSL) [disconnectDetails=DisconnectDetails[sessionID=2,endPoint=server.example:4001 (SSL),reason=DISCONNECT_ON_BROKEN_SOCKET,cause=null,systemMessage=recv: EOF,keepSocketOpen=false]]...
+2026-07-19 15:56:23.645 INFO  [JTS-Fuse-ClosedSocket-25] - SPLASH Attempt 1: server error, will retry in seconds
+2026-07-19 15:56:23.647 INFO  [JTS-DisconnectedS2-27] - IBGateway connection to ccp disconnected.
+2026-07-19 15:56:23.647 INFO  [JTS-Login-28] - Starting launcher login thread
+2026-07-19 15:56:23.647 INFO  [JTS-Login-28] - LauncherLoginThread.runLoginWithUI()[hotBackupStrategy=ON,loginAttempt=2,socketDelay=20000].
+2026-07-19 15:56:23.647 INFO  [JTS-Login-28] - SPLASH Attempt 2: connecting to server
+2026-07-19 15:56:23.647 INFO  [JTS-Login-28] - SPLASH Attempt 2: connecting to server
+2026-07-19 15:56:23.647 INFO  [JTS-Login-28] - ### startLogin startTime=1784456783646
+2026-07-19 15:56:23.647 INFO  [JTS-Login-28] - ### loginAttempt loginAttempt=2
+2026-07-19 15:56:23.647 INFO  [JTS-Login-28] - ### onSocketOpenStart socketOpenStart=1784456783647; endPoint=server.example; port=4001
+2026-07-19 15:56:23.711 INFO  [JTS-Login-28] - ### onSocketOpenEnd socketOpenEnd=1784456783711
+2026-07-19 15:56:23.713 INFO  [JTS-Login-28] - ### onNsMsg loginMessageReq=1784456783713; brandNewUser=false
+2026-07-19 15:56:23.906 INFO  [JTS-Login-28] - SPLASH Attempt 2: Authenticating
+2026-07-19 15:56:28.817 INFO  [AWT-EventQueue-0] - Contacting server.example:4001 as user NOT PRINTED
+2026-07-19 15:56:28.975 INFO  [JTS-AuthDispatcherS3-31] - Received NS_AUTH_START: 1
+2026-07-19 15:56:28.975 INFO  [JTS-AuthDispatcherS3-31] - pwd time to expiry ms: 2315500417000 days: 26800
+2026-07-19 15:56:28.975 INFO  [JTS-AuthDispatcherS3-31] -  NS_AUTH_START version=51 pwd=1 soft=0 token(s)=[token=5, tokenSubtype=2, suffix=a[IB Key]] initialTokenType=PWD authenticationType=MARKET_DATA_CONNECTION identityHashcode=1
+2026-07-19 15:56:28.975 INFO  [JTS-AuthDispatcherS3-31] - Starting password Authentication

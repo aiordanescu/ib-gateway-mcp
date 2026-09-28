@@ -18,6 +18,7 @@ from typing import Self
 
 from ib_async import IB
 
+from ib_gateway_mcp._gateway_log import GatewayLog
 from ib_gateway_mcp.accounts import AccountScope
 from ib_gateway_mcp.config import Settings
 from ib_gateway_mcp.connection import ConnectionManager
@@ -38,7 +39,11 @@ from ib_gateway_mcp.services import (
     ScannersService,
 )
 from ib_gateway_mcp.services._pacing import HistoricalPacing
-from ib_gateway_mcp.startup import check_audit_log, log_safety_configuration
+from ib_gateway_mcp.startup import (
+    check_audit_log,
+    check_gateway_settings_dir,
+    log_safety_configuration,
+)
 from ib_gateway_mcp.subscriptions import SubscriptionRegistry
 
 __all__ = ["Gateway"]
@@ -81,6 +86,10 @@ class Gateway:
             on_resubscribe=self.subscriptions.resubscribe_all,
             on_disconnect=self.subscriptions.mark_all_stale,
         )
+        settings_dir = self.settings.gateway_settings_dir
+        self.gateway_log = GatewayLog(settings_dir) if settings_dir is not None else None
+        """The gateway's launcher.log reader (``IB_GATEWAY_SETTINGS_DIR``), or None when
+        unset; ``gw.ops.health_report()`` reports its login phase."""
 
         self.ops = OpsService(self)
         self.contracts = ContractsService(self)
@@ -108,7 +117,11 @@ class Gateway:
         return self.connection.ib
 
     def health(self) -> HealthReport:
-        """Return the connection's health (same as ``gw.ops.health()``)."""
+        """Return the connection's health (same as ``gw.ops.health()``).
+
+        Synchronous and without I/O, so ``login_state`` is null here; ``await
+        gw.ops.health_report()`` adds it.
+        """
         return self.ops.health()
 
     async def start(self, *, wait: float | None = None) -> None:
@@ -116,6 +129,8 @@ class Gateway:
 
         Logs the safety configuration first (warning about risky combinations), and
         refuses to start when a write toolset is on and the audit file cannot be written.
+        With ``IB_GATEWAY_SETTINGS_DIR`` set, it checks that directory too and logs what
+        is wrong with it, but never fails because of it.
 
         Args:
             wait: Longest time (seconds) to wait for the first connection attempt; by
@@ -128,6 +143,8 @@ class Gateway:
         """
         check_audit_log(self.settings, self.safety.audit)
         log_safety_configuration(self.settings)
+        if self.gateway_log is not None:
+            await check_gateway_settings_dir(self.gateway_log)
         await self.connection.start(wait=wait)
         try:
             self.subscriptions.start()

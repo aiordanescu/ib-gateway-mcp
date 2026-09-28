@@ -1,0 +1,26 @@
+2026-08-31 12:30:07.589 INFO  [JTS-DeadlockMonitor-2] - Memory:total=786,432KB free=730,813KB HeapUsage: Max=786,432KB used=55,206KB committed=70,656KB NonHeapUsage: Max=0KB used=95,814KB committed=102,016KB
+2026-08-31 12:30:07.591 WARN  [JTS-DeadlockMonitor-2] - instance of control is not created yet
+2026-08-31 12:30:08.592 INFO  [JTS-DeadlockMonitor-2] - CPU:cur=0.04% avg=0.04% 30 min avg=0.04% 10 min avg=0.04% 5 min avg=0.04% 1 min avg=0.04%
+GC:called=46 times CPU used=0.00%
+Finalizer:cur=0.00% avg=0.00% 30 min avg=0.00% 10 min avg=0.00% 5 min avg=0.00% 1 min avg=0.00%
+Threads Count:curr live=27 curr daemon=18
+2026-08-31 12:30:08.824 INFO  [JTS-GstatMessageMgr-26] - Sending a request to GSTAT [url=https://server.example/v1/gstat//bulletins,data='{"p":"10501e","t":"Maintenance","tz":"Asia/Kolkata","peer":"server.example","format":"webapp","theme":"dark","fontSize":"12px","lang":"en","user":"***","ut":"paper"}']...
+2026-08-31 12:30:09.050 INFO  [JTS-GstatMessageMgr-26] - Received response [errorCode=204,contentLen=-1].
+2026-08-31 12:30:09.054 INFO  [JavaFX Application Thread] - GstatMessagePanel: bridge already created
+2026-08-31 12:30:09.054 INFO  [JavaFX Application Thread] - GstatMessagePanel: setup web app is done
+2026-08-31 12:33:09.050 INFO  [JTS-GstatMessageMgr-26] - Sending a request to GSTAT [url=https://server.example/v1/gstat//bulletins,data='{"p":"10501e","t":"Maintenance","tz":"Asia/Kolkata","peer":"server.example","format":"webapp","theme":"dark","fontSize":"12px","lang":"en","user":"***","ut":"paper"}']...
+2026-08-31 12:33:09.244 INFO  [JTS-GstatMessageMgr-26] - Received response [errorCode=204,contentLen=-1].
+2026-08-31 12:33:09.249 INFO  [JavaFX Application Thread] - GstatMessagePanel: bridge already created
+2026-08-31 12:33:09.249 INFO  [JavaFX Application Thread] - GstatMessagePanel: setup web app is done
+2026-08-31 12:35:07.612 INFO  [JTS-DeadlockMonitor-2] - Memory:total=786,432KB free=732,740KB HeapUsage: Max=786,432KB used=53,193KB committed=70,656KB NonHeapUsage: Max=0KB used=95,894KB committed=102,016KB
+2026-08-31 12:35:07.613 WARN  [JTS-DeadlockMonitor-2] - instance of control is not created yet
+2026-08-31 12:35:08.614 INFO  [JTS-DeadlockMonitor-2] - CPU:cur=0.04% avg=0.04% 30 min avg=0.04% 10 min avg=0.04% 5 min avg=0.04% 1 min avg=0.04%
+GC:called=47 times CPU used=0.00%
+Finalizer:cur=0.00% avg=0.00% 30 min avg=0.00% 10 min avg=0.00% 5 min avg=0.00% 1 min avg=0.00%
+Threads Count:curr live=27 curr daemon=18
+2026-08-31 12:36:09.245 INFO  [JTS-GstatMessageMgr-26] - Sending a request to GSTAT [url=https://server.example/v1/gstat//bulletins,data='{"p":"10501e","t":"Maintenance","tz":"Asia/Kolkata","peer":"server.example","format":"webapp","theme":"dark","fontSize":"12px","lang":"en","user":"***","ut":"paper"}']...
+2026-08-31 12:36:09.397 INFO  [JTS-GstatMessageMgr-26] - Received response [errorCode=204,contentLen=-1].
+2026-08-31 12:36:09.401 INFO  [JavaFX Application Thread] - GstatMessagePanel: bridge already created
+2026-08-31 12:36:09.401 INFO  [JavaFX Application Thread] - GstatMessagePanel: setup web app is done
+2026-08-31 12:39:09.398 INFO  [JTS-GstatMessageMgr-26] - Sending a request to GSTAT [url=https://server.example/v1/gstat//bulletins,data='{"p":"10501e","t":"Maintenance","tz":"Asia/Kolkata","peer":"server.example","format":"webapp","theme":"dark","fontSize":"12px","lang":"en","user":"***","ut":"paper"}']...
+2026-08-31 12:39:09.529 INFO  [JTS-GstatMessageMgr-26] - Received response [errorCode=204,contentLen=-1].

@@ -1,0 +1,48 @@
+2026-07-19 17:40:23.833 INFO  [JTS-AuthDispatcherS30-326] - SPLASH 20065 step 13 AuthDispatcher.processDataItr
+2026-07-19 17:40:23.833 INFO  [JTS-AuthDispatcherS30-326] - Received NS_TEST_REQUEST
+2026-07-19 17:40:23.833 INFO  [JTS-AuthDispatcherS30-326] - Sent NS_HEART_BEAT:#%#%0000MISC51;531;20260719-12:10:23;
+2026-07-19 17:40:41.151 INFO  [JTS-AuthDispatcherS30-326] - dsaViaSms=true
+2026-07-19 17:40:41.151 INFO  [JTS-AuthDispatcherS30-326] - Received CHALLENGE
+2026-07-19 17:40:41.151 INFO  [JTS-AuthDispatcherS30-326] - AuthTimeoutMonitor-CCP: pause
+2026-07-19 17:40:41.563 INFO  [JTS-AuthTimeoutMonitorThread-CCP-327] - AuthTimeoutMonitor-CCP: Timeout!
+2026-07-19 17:40:41.563 INFO  [JTS-AuthTimeoutMonitorThread-CCP-327] - Disconnecting server.example:4001 (SSL) [disconnectDetails=DisconnectDetails[sessionID=30,endPoint=server.example:4001 (SSL),reason=NO_AUTH_RESPONSE,cause=null,systemMessage=null,keepSocketOpen=false]]...
+2026-07-19 17:40:41.564 INFO  [JTS-AuthTimeoutMonitorThread-CCP-327] - SocketTracker[name=name=CCP(server.example:4001 (SSL)),usesCcpConMan=false,lastReadTimestamp=1784463041150,lastReadDateTime=2026-07-19T17:40:41.150,lastFixSendTime=].
+2026-07-19 17:40:41.564 ERROR [JTS-AuthTimeoutMonitorThread-CCP-327] - Authentication timeout
+2026-07-19 17:40:41.564 INFO  [JTS-AuthTimeoutMonitorThread-CCP-327] - SPLASH Attempt 13: network error, will retry in seconds
+2026-07-19 17:40:41.565 INFO  [JTS-DisconnectedS30-335] - IBGateway connection to ccp disconnected.
+2026-07-19 17:40:41.565 INFO  [JTS-Login-336] - Starting launcher login thread
+2026-07-19 17:40:41.565 INFO  [JTS-Login-336] - LauncherLoginThread.runLoginWithUI()[hotBackupStrategy=ON,loginAttempt=14,socketDelay=30000].
+2026-07-19 17:40:41.565 INFO  [JTS-Login-336] - SPLASH Attempt 14: connecting to server
+2026-07-19 17:40:41.565 INFO  [JTS-Login-336] - SPLASH Attempt 14: connecting to server
+2026-07-19 17:40:41.565 INFO  [JTS-Login-336] - ### startLogin startTime=1784463041565
+2026-07-19 17:40:41.565 INFO  [JTS-Login-336] - ### loginAttempt loginAttempt=14
+2026-07-19 17:40:41.567 INFO  [JTS-Login-336] - ### onSocketOpenStart socketOpenStart=1784463041567; endPoint=server.example; port=4001
+2026-07-19 17:40:41.631 INFO  [JTS-Login-336] - ### onSocketOpenEnd socketOpenEnd=1784463041631
+2026-07-19 17:40:41.633 INFO  [JTS-Login-336] - ### onNsMsg loginMessageReq=1784463041633; brandNewUser=false
+2026-07-19 17:40:41.823 INFO  [JTS-Login-336] - SPLASH Attempt 14: Authenticating
+2026-07-19 17:40:41.890 INFO  [JTS-AuthDispatcherS31-339] - Received NS_AUTH_START: 1
+2026-07-19 17:40:41.890 INFO  [JTS-AuthDispatcherS31-339] - pwd time to expiry ms: 2315494159000 days: 26800
+2026-07-19 17:40:41.890 INFO  [JTS-AuthDispatcherS31-339] -  NS_AUTH_START version=51 pwd=1 soft=0 token(s)=[token=5, tokenSubtype=2, suffix=a[IB Key]] initialTokenType=PWD authenticationType=MARKET_DATA_CONNECTION identityHashcode=1
+2026-07-19 17:40:41.890 INFO  [JTS-AuthDispatcherS31-339] - Starting password Authentication
+2026-07-19 17:40:42.081 INFO  [JTS-AuthDispatcherS31-339] - Received AUTH_RESULT
+2026-07-19 17:40:42.081 INFO  [JTS-AuthDispatcherS31-339] - Passed pwd authentication.
+2026-07-19 17:40:46.719 INFO  [AWT-EventQueue-0] - Contacting server.example:4001 as user NOT PRINTED
+2026-07-19 17:41:22.210 INFO  [JTS-AuthDispatcherS31-339] - SPLASH 20065 step 14 AuthDispatcher.processDataItr
+2026-07-19 17:41:22.210 INFO  [JTS-AuthDispatcherS31-339] - Received NS_TEST_REQUEST
+2026-07-19 17:41:22.211 INFO  [JTS-AuthDispatcherS31-339] - Sent NS_HEART_BEAT:#%#%0000MISC51;531;20260719-12:11:22;
+2026-07-19 17:43:00.195 WARN  [JTS-DeadlockMonitor-2] - instance of control is not created yet
+2026-07-19 17:43:00.196 INFO  [JTS-DeadlockMonitor-2] - Memory:total=786,432KB free=706,622KB HeapUsage: Max=786,432KB used=78,587KB committed=133,120KB NonHeapUsage: Max=0KB used=98,578KB committed=102,720KB
+2026-07-19 17:43:01.196 INFO  [JTS-DeadlockMonitor-2] - CPU:cur=0.00% avg=0.00% 30 min avg=0.01% 10 min avg=0.01% 5 min avg=0.01% 1 min avg=0.00%
+GC:called=12 times CPU used=0.00%
+Finalizer:cur=0.00% avg=0.00% 30 min avg=0.00% 10 min avg=0.00% 5 min avg=0.00% 1 min avg=0.00%
+Threads Count:curr live=35 curr daemon=19
+2026-07-19 17:45:02.921 INFO  [JTS-AuthDispatcherS31-339] - SPLASH 20064 step 14 AuthDispatcher.processDataItr
+2026-07-19 17:45:02.921 INFO  [JTS-AuthDispatcherS31-339] - Received NS_TEST_REQUEST
+2026-07-19 17:45:02.921 INFO  [JTS-AuthDispatcherS31-339] - Sent NS_HEART_BEAT:#%#%0000MISC51;531;20260719-12:15:02;
+2026-07-19 17:45:21.549 INFO  [JTS-CCPListenerS31-338] - Socket for connection server.example:4001 (SSL) was closed by peer.
+2026-07-19 17:45:21.650 INFO  [JTS-Fuse-ClosedSocket-345] - Disconnecting server.example:4001 (SSL) [disconnectDetails=DisconnectDetails[sessionID=31,endPoint=server.example:4001 (SSL),reason=DISCONNECT_ON_BROKEN_SOCKET,cause=null,systemMessage=recv: EOF,keepSocketOpen=false]]...
+2026-07-19 17:45:21.651 INFO  [JTS-Fuse-ClosedSocket-345] - SocketTracker[name=name=CCP(server.example:4001 (SSL)),usesCcpConMan=false,lastReadTimestamp=1784463321549,lastReadDateTime=2026-07-19T17:45:21.549,lastFixSendTime=].
+2026-07-19 17:45:21.652 INFO  [JTS-GstatMessageMgr-346] - Sending a request to GSTAT [url=https://server.example/v1/gstat//bulletins,data='{"p":"10451j","t":"Maintenance","tz":"Asia/Kolkata","peer":"server.example","format":"webapp","theme":"dark","fontSize":"12px","lang":"en","user":"***","ut":"live"}']...
+2026-07-19 17:45:21.652 INFO  [JTS-Fuse-ClosedSocket-345] - Authorization failed: SUPPRESS_MESSAGE_BOX. MessageType: null. FailReason: 2147483647
+2026-07-19 17:45:21.652 INFO  [JTS-DisconnectedS31-347] - IBGateway connection to ccp disconnected.
+2026-07-19 17:45:21.877 INFO  [JTS-GstatMessageMgr-346] - Received response [errorCode=204,contentLen=-1].

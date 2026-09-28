@@ -1,0 +1,68 @@
+2026-08-30 04:06:09.043 ERROR [AWT-EventQueue-0] - Too many failed login attempts. Please wait 55 seconds before attempting to re-login again.
+2026-08-30 04:07:07.236 INFO  [AWT-EventQueue-0] - Contacting server.example:4001 as user NOT PRINTED
+2026-08-30 04:07:07.237 INFO  [JTS-Login-82] - Starting launcher login thread
+2026-08-30 04:07:07.237 INFO  [JTS-Login-82] - LauncherLoginThread.runLoginWithUI()[hotBackupStrategy=ON,loginAttempt=1,socketDelay=20000].
+2026-08-30 04:07:07.237 INFO  [JTS-Login-82] - SPLASH Connecting to server
+2026-08-30 04:07:07.237 INFO  [JTS-Login-82] - ### startLogin startTime=1788043027237
+2026-08-30 04:07:07.237 INFO  [JTS-Login-82] - ### loginAttempt loginAttempt=1
+2026-08-30 04:07:07.237 INFO  [JTS-Login-82] - ### onSocketOpenStart socketOpenStart=1788043027237; endPoint=server.example; port=4001
+2026-08-30 04:07:07.302 INFO  [JTS-Login-82] - ### onSocketOpenEnd socketOpenEnd=1788043027302
+2026-08-30 04:07:07.304 INFO  [JTS-Login-82] - ### onNsMsg loginMessageReq=1788043027304; brandNewUser=false
+2026-08-30 04:07:07.496 INFO  [JTS-Login-82] - SPLASH Authenticating
+2026-08-30 04:07:07.562 INFO  [JTS-AuthDispatcherS7-86] - Received NS_AUTH_START: 1
+2026-08-30 04:07:07.562 INFO  [JTS-AuthDispatcherS7-86] - pwd time to expiry ms: 2311914173000 days: 26759
+2026-08-30 04:07:07.562 INFO  [JTS-AuthDispatcherS7-86] -  NS_AUTH_START version=52 pwd=1 soft=0 token(s)=[token=5, tokenSubtype=2, suffix=a[IB Key]] initialTokenType=PWD authenticationType=MARKET_DATA_CONNECTION identityHashcode=1
+2026-08-30 04:07:07.562 INFO  [JTS-AuthDispatcherS7-86] - Resetting session token (password auth)...
+2026-08-30 04:07:07.562 INFO  [JTS-AuthDispatcherS7-86] - Starting password Authentication
+2026-08-30 04:07:07.757 INFO  [JTS-AuthDispatcherS7-86] - Received AUTH_RESULT
+2026-08-30 04:07:07.757 INFO  [JTS-AuthDispatcherS7-86] - Passed pwd authentication.
+2026-08-30 04:07:07.821 INFO  [JTS-AuthDispatcherS7-86] - dsaViaSms=true
+2026-08-30 04:07:07.822 INFO  [JTS-AuthDispatcherS7-86] - Received CHALLENGE
+2026-08-30 04:07:07.822 INFO  [JTS-AuthDispatcherS7-86] - AuthTimeoutMonitor-CCP: pause
+2026-08-30 04:07:27.822 INFO  [JTS-AuthDispatcherS7-86] - SPLASH 20001 step 2 AuthDispatcher.processDataItr
+2026-08-30 04:07:27.823 INFO  [JTS-AuthDispatcherS7-86] - Received NS_TEST_REQUEST
+2026-08-30 04:07:27.823 INFO  [JTS-AuthDispatcherS7-86] - Sent NS_HEART_BEAT:#%#%0000MISC52;531;20260829-22:37:27;
+2026-08-30 04:07:47.888 INFO  [JTS-AuthDispatcherS7-86] - SPLASH 20066 step 2 AuthDispatcher.processDataItr
+2026-08-30 04:07:47.889 INFO  [JTS-AuthDispatcherS7-86] - Received NS_TEST_REQUEST
+2026-08-30 04:07:47.889 INFO  [JTS-AuthDispatcherS7-86] - Sent NS_HEART_BEAT:#%#%0000MISC52;531;20260829-22:37:47;
+2026-08-30 04:14:09.137 INFO  [JTS-AuthDispatcherS7-86] - SPLASH 20065 step 2 AuthDispatcher.processDataItr
+2026-08-30 04:14:09.138 INFO  [JTS-AuthDispatcherS7-86] - Received NS_TEST_REQUEST
+2026-08-30 04:14:09.138 INFO  [JTS-AuthDispatcherS7-86] - Sent NS_HEART_BEAT:#%#%0000MISC52;531;20260829-22:44:09;
+2026-08-30 04:14:28.462 INFO  [JTS-CCPListenerS7-85] - Socket for connection server.example:4001 (SSL) was closed by peer.
+2026-08-30 04:14:28.563 INFO  [JTS-Fuse-ClosedSocket-92] - Disconnecting server.example:4001 (SSL) [disconnectDetails=DisconnectDetails[sessionID=7,endPoint=server.example:4001 (SSL),reason=DISCONNECT_ON_BROKEN_SOCKET,cause=null,systemMessage=recv: EOF,keepSocketOpen=false]]...
+2026-08-30 04:14:28.565 INFO  [JTS-Fuse-ClosedSocket-92] - Authorization failed: SUPPRESS_MESSAGE_BOX. MessageType: null. FailReason: 2147483647
+2026-08-30 04:14:28.565 INFO  [JTS-DisconnectedS7-94] - IBGateway connection to ccp disconnected.
+2026-08-30 04:14:33.731 INFO  [AWT-EventQueue-0] - Stopping GstatMessageMgr...
+2026-08-30 04:14:33.734 ERROR [AWT-EventQueue-0] - Too many failed login attempts. Please wait 55 seconds before attempting to re-login again.
+2026-08-30 04:15:17.276 INFO  [JTS-DeadlockMonitor-2] - Memory:total=786,432KB free=736,535KB HeapUsage: Max=786,432KB used=49,836KB committed=83,968KB NonHeapUsage: Max=0KB used=100,814KB committed=104,000KB
+2026-08-30 04:15:17.277 WARN  [JTS-DeadlockMonitor-2] - instance of control is not created yet
+2026-08-30 04:15:18.278 INFO  [JTS-DeadlockMonitor-2] - CPU:cur=0.01% avg=0.02% 30 min avg=0.02% 10 min avg=0.02% 5 min avg=0.02% 1 min avg=0.02%
+GC:called=33 times CPU used=0.00%
+Finalizer:cur=0.00% avg=0.00% 30 min avg=0.00% 10 min avg=0.00% 5 min avg=0.00% 1 min avg=0.00%
+Threads Count:curr live=31 curr daemon=22
+2026-08-30 04:15:31.917 INFO  [AWT-EventQueue-0] - Contacting server.example:4001 as user NOT PRINTED
+2026-08-30 04:15:31.918 INFO  [JTS-Login-96] - Starting launcher login thread
+2026-08-30 04:15:31.918 INFO  [JTS-Login-96] - LauncherLoginThread.runLoginWithUI()[hotBackupStrategy=ON,loginAttempt=1,socketDelay=20000].
+2026-08-30 04:15:31.919 INFO  [JTS-Login-96] - SPLASH Connecting to server
+2026-08-30 04:15:31.919 INFO  [JTS-Login-96] - ### startLogin startTime=1788043531918
+2026-08-30 04:15:31.919 INFO  [JTS-Login-96] - ### loginAttempt loginAttempt=1
+2026-08-30 04:15:31.919 INFO  [JTS-Login-96] - ### onSocketOpenStart socketOpenStart=1788043531919; endPoint=server.example; port=4001
+2026-08-30 04:15:31.984 INFO  [JTS-Login-96] - ### onSocketOpenEnd socketOpenEnd=1788043531984
+2026-08-30 04:15:31.986 INFO  [JTS-Login-96] - ### onNsMsg loginMessageReq=1788043531986; brandNewUser=false
+2026-08-30 04:15:32.180 INFO  [JTS-Login-96] - SPLASH Authenticating
+2026-08-30 04:15:32.247 INFO  [JTS-AuthDispatcherS8-100] - Received NS_AUTH_START: 1
+2026-08-30 04:15:32.247 INFO  [JTS-AuthDispatcherS8-100] - pwd time to expiry ms: 2311913668000 days: 26759
+2026-08-30 04:15:32.247 INFO  [JTS-AuthDispatcherS8-100] -  NS_AUTH_START version=52 pwd=1 soft=0 token(s)=[token=5, tokenSubtype=2, suffix=a[IB Key]] initialTokenType=PWD authenticationType=MARKET_DATA_CONNECTION identityHashcode=1
+2026-08-30 04:15:32.247 INFO  [JTS-AuthDispatcherS8-100] - Resetting session token (password auth)...
+2026-08-30 04:15:32.247 INFO  [JTS-AuthDispatcherS8-100] - Starting password Authentication
+2026-08-30 04:15:32.445 INFO  [JTS-AuthDispatcherS8-100] - Received AUTH_RESULT
+2026-08-30 04:15:32.445 INFO  [JTS-AuthDispatcherS8-100] - Passed pwd authentication.
+2026-08-30 04:15:32.511 INFO  [JTS-AuthDispatcherS8-100] - dsaViaSms=true
+2026-08-30 04:15:32.511 INFO  [JTS-AuthDispatcherS8-100] - Received CHALLENGE
+2026-08-30 04:15:32.511 INFO  [JTS-AuthDispatcherS8-100] - AuthTimeoutMonitor-CCP: pause
+2026-08-30 04:15:52.511 INFO  [JTS-AuthDispatcherS8-100] - SPLASH 20001 step 2 AuthDispatcher.processDataItr
+2026-08-30 04:15:52.511 INFO  [JTS-AuthDispatcherS8-100] - Received NS_TEST_REQUEST
+2026-08-30 04:15:52.512 INFO  [JTS-AuthDispatcherS8-100] - Sent NS_HEART_BEAT:#%#%0000MISC52;531;20260829-22:45:52;
+2026-08-30 04:16:12.578 INFO  [JTS-AuthDispatcherS8-100] - SPLASH 20067 step 2 AuthDispatcher.processDataItr
+2026-08-30 04:16:12.578 INFO  [JTS-AuthDispatcherS8-100] - Received NS_TEST_REQUEST
+2026-08-30 04:16:12.579 INFO  [JTS-AuthDispatcherS8-100] - Sent NS_HEART_BEAT:#%#%0000MISC52;531;20260829-22:46:12;

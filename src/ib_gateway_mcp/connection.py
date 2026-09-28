@@ -14,6 +14,12 @@ hint meanwhile. A gateway that goes silent without closing the socket (a hung JV
 stalled tunnel) is caught by an idle probe: after ``LIVENESS_IDLE`` seconds without
 incoming data the manager asks for the server time, and reconnects if no answer comes.
 
+A refusal carries no reason in the TWS API: a gateway that is stopped, starting, waiting
+for a second factor or stuck at login looks the same. So the hints list the possibilities
+rather than pick one, and the health report keeps when the connection last went down
+(``last_disconnect_at``), also after it comes back, so an outage can be reported without
+guessing its cause.
+
 What protects against unwanted orders
 -------------------------------------
 ``connectAsync(readonly=True)`` is **not** a safety boundary. In ib_async 2.1.0 it only
@@ -57,7 +63,7 @@ from typing import Any
 from ib_async import IB, Client, ContractDetails
 from ib_async.ib import StartupFetch, StartupFetchALL
 
-from ib_gateway_mcp._ib_compat import end_request, fail_pending_requests
+from ib_gateway_mcp._ib_compat import end_request, fail_pending_requests, tcp_connect_timed_out
 from ib_gateway_mcp._util import utc_now
 from ib_gateway_mcp.accounts import AccountScope
 from ib_gateway_mcp.config import Settings
@@ -109,19 +115,32 @@ LIVENESS_IDLE_DEGRADED = 4 * LIVENESS_IDLE
 """Idle seconds before the gateway is probed while IBKR connectivity is lost: silence is
 expected then, but a hung gateway must still be caught."""
 
+# The API gives no reason for a refusal, so these hints list the possibilities and say
+# the API doesn't tell which; get_health's login_state can (IB_GATEWAY_SETTINGS_DIR).
 HINT_REFUSED = (
-    "The gateway refused the connection: it is not running, the API port is wrong, "
-    "or it is logged out / waiting on 2FA. Retrying in the background."
+    "The gateway refused the connection: it is not running, IB_PORT is not its API port, "
+    "or it is not logged in to IBKR (starting, waiting on 2FA, or stuck at login). The API "
+    "doesn't say which. Retrying in the background."
 )
 HINT_PEER_CLOSED = (
     "The gateway accepted the connection and closed it before the API session was ready: "
-    "the gateway behind the relay (ib-gateway-docker's socat accepts, then closes) is not "
-    "running, is starting up, logged out, or waiting on 2FA. Retrying in the background."
+    "behind ib-gateway-docker's relay (socat accepts, then closes), the gateway is not "
+    "running or not logged in to IBKR (starting, waiting on 2FA, or stuck at login). The "
+    "API doesn't say which. Retrying in the background."
 )
 HINT_HANDSHAKE_TIMEOUT = (
     "The gateway accepted the socket but did not complete the API handshake: it is "
-    "starting up, logged out, or waiting on 2FA. Retrying in the background."
+    "starting, not logged in to IBKR, or hung. The API doesn't say which. Retrying in the "
+    "background."
 )
+HINT_CONNECT_TIMEOUT = (
+    "Cannot reach the gateway at {host}:{port}: no answer to the TCP connect within "
+    "{timeout:g}s (host down, a firewall dropping packets, or the wrong IB_HOST). Retrying in "
+    "the background."
+)
+LOGIN_PHASE_POINTER = "get_health reports the gateway's login phase."
+"""Appended to an unexplained refusal's not_connected message when IB_GATEWAY_SETTINGS_DIR
+is set."""
 HINT_CLIENT_ID_IN_USE = (
     "Client id {client_id} is already in use by another API connection. "
     "Set IB_CLIENT_ID to an id no other API client of this gateway uses."
@@ -149,7 +168,8 @@ HINT_STOPPED = "The connection manager is stopped."
 HINT_NOT_STARTED = "The connection manager has not been started."
 HINT_READ_ONLY_API = (
     "The gateway's API is in read-only mode (error 321), so orders are rejected. "
-    "Untick 'Read-Only API' in the gateway settings (ib-gateway-docker: READ_ONLY_API=no; "
+    "The operator needs to untick 'Read-Only API' in the gateway settings (ib-gateway-docker: "
+    "READ_ONLY_API=no; "
     "if it already is no, set it to yes and then back to no, restarting the gateway each "
     "time)."
 )
@@ -237,6 +257,10 @@ class ConnectionManager:
         self._hint: str | None = HINT_NOT_STARTED
         self._last_error: ErrorInfo | None = None
         self._connected_since: datetime | None = None
+        # When the connection last went down; kept after it comes back (see
+        # last_disconnect_at). _started_at dates an outage the manager started in.
+        self._last_disconnect_at: datetime | None = None
+        self._started_at: datetime | None = None
         self._server_version: int | None = None
         self._orders_synced: bool | None = None
         self._api_read_only = False
@@ -246,6 +270,9 @@ class ConnectionManager:
         self._connects = 0
         # Per attempt / per session facts the error stream reports before we are CONNECTED.
         self._client_id_clash = False
+        # The last failed attempt was refused, closed or timed out by the gateway with no
+        # reason given (not a client-id clash, not a DNS, routing or TCP connect failure).
+        self._refusal_unexplained = False
         self._ibkr_link_down: int | None = None  # the 1100/2110 code while IBKR is cut off
         self._probing = False
         # time.monotonic() of the last currentTime answer (see request_current_time).
@@ -372,6 +399,33 @@ class ConnectionManager:
         return self._connected_since
 
     @property
+    def last_disconnect_at(self) -> datetime | None:
+        """When the connection last went down (UTC), or None while no outage has been seen.
+
+        Set when a session that was up drops (or is stopped), not on each failed retry,
+        and kept after the connection comes back. An attempt that fails before the first
+        session comes up means the gateway was already down when :meth:`start` was called:
+        it is then that start time, a lower bound (the outage may be older). A first
+        attempt that succeeds leaves it None until the session drops.
+        """
+        return self._last_disconnect_at
+
+    @property
+    def refusal_unexplained(self) -> bool:
+        """True while ``not_accepting`` because the gateway gave no reason.
+
+        That is: it refused the connection, closed it before the API session was ready,
+        or never finished the handshake. A client-id clash or an unreachable host (DNS,
+        routing, no answer to the TCP connect) is explained by its own hint, so it does
+        not count.
+        """
+        return (
+            self._state is ConnectionState.NOT_ACCEPTING
+            and self._refusal_unexplained
+            and not self._client_id_clash
+        )
+
+    @property
     def server_version(self) -> int | None:
         """The TWS API server version of the current session, or None."""
         return self._server_version
@@ -441,6 +495,7 @@ class ConnectionManager:
             client_id=self._settings.ib_client_id,
             server_version=self._server_version if connected else None,
             connected_since=self._connected_since if connected else None,
+            last_disconnect_at=self._last_disconnect_at,
             last_error=self._last_error,
             api_read_only=self._api_read_only,
             accounts=sorted(self._accounts.allowed),
@@ -469,6 +524,9 @@ class ConnectionManager:
         """
         if self._supervisor is not None:
             return
+        if self._last_disconnect_at is None:
+            # If an attempt fails before any session comes up, the outage dates from here.
+            self._started_at = utc_now()
         self._stopping = False
         self._first_attempt.clear()
         self._supervisor = asyncio.create_task(self._supervise(), name="ib-connection")
@@ -555,11 +613,19 @@ class ConnectionManager:
         try:
             await self._connect(readonly)
         except _PeerClosedError as exc:
-            self._fail(ConnectionState.NOT_ACCEPTING, self._peer_closed_hint(), exc)
+            hint = self._peer_closed_hint()
+            self._fail(ConnectionState.NOT_ACCEPTING, hint, exc, unexplained=True)
         except ConnectionRefusedError as exc:
-            self._fail(ConnectionState.NOT_ACCEPTING, HINT_REFUSED, exc)
+            self._fail(ConnectionState.NOT_ACCEPTING, HINT_REFUSED, exc, unexplained=True)
         except TimeoutError as exc:
-            self._fail(ConnectionState.NOT_ACCEPTING, self._handshake_timeout_hint(), exc)
+            if not self._client_id_clash and tcp_connect_timed_out(self._ib):
+                hint = HINT_CONNECT_TIMEOUT.format(
+                    host=settings.ib_host, port=settings.ib_port, timeout=settings.connect_timeout
+                )
+                self._fail(ConnectionState.NOT_ACCEPTING, hint, exc)
+            else:
+                hint = self._handshake_timeout_hint()
+                self._fail(ConnectionState.NOT_ACCEPTING, hint, exc, unexplained=True)
         except OSError as exc:
             hint = f"Cannot reach the gateway at {settings.ib_host}:{settings.ib_port}: {exc}."
             self._fail(ConnectionState.NOT_ACCEPTING, hint, exc)
@@ -863,15 +929,32 @@ class ConnectionManager:
         self._hint = hint
 
     def _mark_down(self, state: ConnectionState, hint: str) -> None:
+        if self._state in (ConnectionState.CONNECTED, ConnectionState.CONNECTIVITY_LOST):
+            # A session that was up went down. A failed retry, or a drop while a reconnect
+            # is still setting up (state CONNECTING), keeps the time of the original drop.
+            self._last_disconnect_at = utc_now()
+        elif self._last_disconnect_at is None and not self._stopping:
+            # A failure before the first session came up (every later outage starts with a
+            # drop, above): the gateway was already down when the manager started. A stop
+            # is no outage.
+            self._last_disconnect_at = self._started_at
         self._set_state(state, hint)
         self._connected.clear()
         self._connected_since = None
 
-    def _fail(self, state: ConnectionState, hint: str, exc: BaseException) -> None:
+    def _fail(
+        self,
+        state: ConnectionState,
+        hint: str,
+        exc: BaseException,
+        *,
+        unexplained: bool = False,
+    ) -> None:
         if not self._client_id_clash:  # else last_error already holds this attempt's 326
             self._last_error = ErrorInfo(code=-1, message=repr(exc), at=utc_now())
         logger.warning("Gateway connection failed: %s", hint)
         self._mark_down(state, hint)
+        self._refusal_unexplained = unexplained
 
     def _handshake_timeout_hint(self) -> str:
         if self._client_id_clash:
@@ -885,7 +968,10 @@ class ConnectionManager:
 
     def _not_connected_message(self) -> str:
         hint = self._hint or "The gateway connection is not up."
-        return f"Not connected to the gateway ({self._state.value}). {hint}"
+        message = f"Not connected to the gateway ({self._state.value}). {hint}"
+        if self._settings.gateway_settings_dir is not None and self.refusal_unexplained:
+            message += f" {LOGIN_PHASE_POINTER}"
+        return message
 
     def _spawn(self, coro: Coroutine[Any, Any, None], name: str) -> None:
         task = asyncio.create_task(coro, name=name)

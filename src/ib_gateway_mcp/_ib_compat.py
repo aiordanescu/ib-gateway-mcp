@@ -21,6 +21,7 @@ __all__ = [
     "pending_request_id",
     "requests_for_contract",
     "subscription_request_id",
+    "tcp_connect_timed_out",
     "ticker_request_id",
 ]
 
@@ -108,3 +109,17 @@ def subscription_request_id(wrapper: object, attribute: str, key: tuple[Any, ...
         req_id = mapping.get(key)
         return req_id if isinstance(req_id, int) else None
     return None
+
+
+def tcp_connect_timed_out(ib: object) -> bool:
+    """Whether the last ``connectAsync`` timed out before its TCP connection was made.
+
+    ib_async sends its API greeting as soon as the socket connects, and zeroes the socket's
+    count of sent messages when a connect begins (not when it fails), so a timeout with
+    nothing sent never reached the gateway: a host that is down or a firewall dropping
+    packets, not a gateway that ignores the handshake. ``connectionStats()`` can't tell, as
+    it raises once the failed connect has reset the client. False when the count is
+    unknown (a test double without it), which keeps the handshake-timeout reading.
+    """
+    sent = getattr(getattr(getattr(ib, "client", None), "conn", None), "numMsgSent", None)
+    return type(sent) is int and sent == 0

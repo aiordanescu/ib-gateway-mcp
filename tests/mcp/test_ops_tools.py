@@ -38,6 +38,27 @@ async def test_ops_tools_are_listed_with_schemas(mcp_client: McpClientFactory) -
         assert tool.annotations.read_only_hint is True
 
 
+DESCRIPTION_MAX_CHARS = 2048
+"""Claude Code cuts tool descriptions longer than this (CLAUDE_CODE_MAX_MCP_DESCRIPTION_LENGTH)."""
+
+
+async def test_get_health_description_fits_the_client_budget(mcp_client: McpClientFactory) -> None:
+    """Measured as served: the SDK keeps the docstring's indentation."""
+    async with mcp_client() as client:
+        tools = {tool.name: tool for tool in (await client.list_tools()).tools}
+    tool = tools["get_health"]
+    description = tool.description or ""
+    assert len(description) <= DESCRIPTION_MAX_CHARS
+    assert description.splitlines()[0] == (
+        "Report whether the Interactive Brokers gateway connection is usable, and what is "
+        "known about why not."
+    )
+    for field in ("last_disconnect_at", "login_state", "awaiting_2fa", "log_updated_at"):
+        assert field in description
+    assert tool.output_schema is not None
+    assert {"login_state", "last_disconnect_at"} <= set(tool.output_schema["properties"])
+
+
 async def test_get_health(mcp_client: McpClientFactory) -> None:
     async with mcp_client() as client:
         result = await client.call_tool("get_health", {})

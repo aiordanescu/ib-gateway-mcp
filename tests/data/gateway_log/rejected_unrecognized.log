@@ -1,0 +1,27 @@
+2026-08-31 22:21:58.473 INFO  [JTS-Main] - ------------------------------- IB GATEWAY RESTART --------------------------------
+2026-08-31 22:21:58.543 INFO  [JTS-Main] - Setting custom timezone: Asia/Kolkata
+2026-08-31 22:21:59.012 INFO  [JTS-Main] - Build 10.50.1e, Aug 25, 2026 4:05:30 PM
+2026-08-31 22:21:59.365 INFO  [AWT-EventQueue-0] - Default timezone:Asia/Kolkata
+2026-08-31 22:21:59.383 INFO  [AWT-EventQueue-0] - Started on 20260831-16:51:59
+2026-08-31 22:21:59.383 INFO  [AWT-EventQueue-0] - Default timezone:Asia/Kolkata name:India Standard Time dst:0
+2026-08-31 22:21:59.604 INFO  [JTS-AuthDispatcherS1-7] - Disconnecting server.example:4001 (SSL) [disconnectDetails=DisconnectDetails[sessionID=1,endPoint=server.example:4001 (SSL),reason=DISCONNECT_BY_DESIGN,cause=null,systemMessage=null,keepSocketOpen=false]]...
+2026-08-31 22:21:59.634 INFO  [AWT-EventQueue-0] - OvernightManager.dayInit: new values: dayOfTheWeek: 2 (Mon), YYYYMMofToday: 202608, YYYYMMDDofToday: 20260831, m_todayDate: 20260831, dueToChangeInTimezone: false
+2026-08-31 22:21:59.712 INFO  [AWT-EventQueue-0] - Stopping GstatMessageMgr...
+2026-08-31 22:21:59.804 INFO  [AWT-EventQueue-0] - Contacting server.example:4001 as user NOT PRINTED
+2026-08-31 22:21:59.812 INFO  [JTS-Login-14] - Starting launcher login thread
+2026-08-31 22:21:59.813 INFO  [JTS-Login-14] - LauncherLoginThread.runLoginWithUI()[hotBackupStrategy=ON,loginAttempt=1,socketDelay=20000].
+2026-08-31 22:21:59.813 INFO  [JTS-Login-14] - SPLASH Connecting to server
+2026-08-31 22:21:59.816 INFO  [JTS-Login-14] - ### startLogin startTime=1788195119812
+2026-08-31 22:21:59.816 INFO  [JTS-Login-14] - ### loginAttempt loginAttempt=1
+2026-08-31 22:21:59.817 INFO  [JTS-Login-14] - ### onSocketOpenStart socketOpenStart=1788195119816; endPoint=server.example; port=4001
+2026-08-31 22:21:59.882 INFO  [JTS-Login-14] - ### onSocketOpenEnd socketOpenEnd=1788195119881
+2026-08-31 22:21:59.888 INFO  [JTS-Login-14] - ### onNsMsg loginMessageReq=1788195119887; brandNewUser=false
+2026-08-31 22:22:00.084 INFO  [JTS-Login-14] - SPLASH Authenticating
+2026-08-31 22:22:00.149 INFO  [JTS-AuthDispatcherS2-18] - Received NS_AUTH_START: 1
+2026-08-31 22:22:00.149 INFO  [JTS-AuthDispatcherS2-18] - pwd time to expiry ms: 2311762080000 days: 26757
+2026-08-31 22:22:00.150 INFO  [JTS-AuthDispatcherS2-18] -  NS_AUTH_START version=52 pwd=1 soft=0 token(s)=[token=0] initialTokenType=PWD authenticationType=MARKET_DATA_CONNECTION identityHashcode=1
+2026-08-31 22:22:00.150 INFO  [JTS-AuthDispatcherS2-18] - Resetting session token (password auth)...
+2026-08-31 22:22:00.151 INFO  [JTS-AuthDispatcherS2-18] - Starting password Authentication
+2026-08-31 22:22:00.348 INFO  [JTS-AuthDispatcherS2-18] - Received AUTH_RESULT
+2026-08-31 22:22:00.349 INFO  [JTS-AuthDispatcherS2-18] - Authorization failed: Synthetic rejection for the tests, not an IBKR message. MessageType: null. FailReason: 99
+2026-08-31 22:22:00.351 INFO  [JTS-AuthDispatcherS2-18] - ### onAuthenticationCompleted tokenProtocol=0; authenticated=false

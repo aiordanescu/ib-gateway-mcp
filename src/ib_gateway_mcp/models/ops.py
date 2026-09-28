@@ -17,6 +17,8 @@ __all__ = [
     "ErrorInfo",
     "HealthProbe",
     "HealthReport",
+    "LoginPhase",
+    "LoginState",
     "ServerTime",
     "UserInfo",
 ]
@@ -34,7 +36,8 @@ class ConnectionState(StrEnum):
     CONNECTIVITY_LOST = "connectivity_lost"
     """The API session is up but the gateway lost its link to IBKR (error 1100 or 2110)."""
     NOT_ACCEPTING = "not_accepting"
-    """The gateway refused or ignored the connection: down, logged out, or waiting on 2FA."""
+    """The gateway refused or ignored the connection; unless hint names a cause (client id in
+    use, host unreachable), the API doesn't say why (see login_state)."""
 
 
 class ErrorInfo(BaseModel):
@@ -56,6 +59,96 @@ class HealthProbe(BaseModel):
     error: str | None = Field(None, description="Why the probe failed (when not ok).")
 
 
+class LoginPhase(StrEnum):
+    """The gateway's login phase, as its launcher.log shows it.
+
+    - logged_in: the last login in the log succeeded. The gateway logs nothing after a
+      successful login, so later events (a stop, an ended session) aren't visible here,
+      and an old log_updated_at is normal.
+    - restarting: the gateway just started (a container start or the daily auto-restart)
+      and is about to log in.
+    - logging_in: a login is in progress, including the gateway's own retries, or IBKR just
+      ended one (detail says so; a new login then follows only if the gateway's login
+      automation is set to retry).
+    - awaiting_2fa: IBKR sent a second-factor challenge (an IB Key push, for example) and
+      the gateway waits for the account holder to approve it.
+    - throttled: the gateway is pausing logins after repeated failures until retry_at. It
+      logs in again then only if its login automation is set to retry (ib-gateway-docker:
+      RELOGIN_AFTER_TWOFA_TIMEOUT=yes); otherwise the phase turns login_idle.
+    - login_rejected: IBKR rejected the login; the gateway doesn't retry by itself.
+    - login_idle: the gateway runs but isn't logged in, and nothing is retrying.
+    - unknown: launcher.log can't tell (unreadable, silent, or no gateway start in it);
+      detail says why.
+    """
+
+    LOGGED_IN = "logged_in"
+    RESTARTING = "restarting"
+    LOGGING_IN = "logging_in"
+    AWAITING_2FA = "awaiting_2fa"
+    THROTTLED = "throttled"
+    LOGIN_REJECTED = "login_rejected"
+    LOGIN_IDLE = "login_idle"
+    UNKNOWN = "unknown"
+
+
+class LoginState(BaseModel):
+    """What the gateway's launcher.log says about its login to IBKR."""
+
+    phase: LoginPhase = Field(description="The gateway's login phase.")
+    since: datetime | None = Field(
+        None, description="When this phase began, per the log (UTC); null when unknown."
+    )
+    detail: str | None = Field(
+        None,
+        description=(
+            "More about the phase, in this server's fixed wording (never text from the log)."
+        ),
+    )
+    retry_at: datetime | None = Field(
+        None,
+        description=(
+            "When the gateway's pause after repeated failed logins ends (UTC); set only while "
+            "throttled. The gateway logs in again then only if its login automation is set to "
+            "retry (ib-gateway-docker: RELOGIN_AFTER_TWOFA_TIMEOUT=yes)."
+        ),
+    )
+    login_attempts: int | None = Field(
+        None,
+        description=(
+            "Authentication rounds in the current login sequence: since the last successful "
+            "login, or, while logged_in, the rounds that led to it. Null when unknown."
+        ),
+    )
+    twofa_challenges: int | None = Field(
+        None,
+        description=(
+            "Second-factor challenges (IB Key pushes and the like) IBKR sent in the same "
+            "login sequence. Null when unknown."
+        ),
+    )
+    counted_since: datetime | None = Field(
+        None,
+        description=(
+            "Start of the counts (UTC): the successful login before the sequence, or the "
+            "oldest log line read."
+        ),
+    )
+    counts_complete: bool = Field(
+        False,
+        description=(
+            "False when the log files read hold no earlier successful login: the counts are "
+            "then a lower bound."
+        ),
+    )
+    log_updated_at: datetime | None = Field(
+        None,
+        description=(
+            "Last write to launcher.log (UTC). An old time is normal while logged_in; before "
+            "a login the gateway writes to it every few minutes."
+        ),
+    )
+
+
 class HealthReport(BaseModel):
     """A plain-language snapshot of the gateway connection."""
 
@@ -66,7 +159,23 @@ class HealthReport(BaseModel):
     client_id: int
     server_version: int | None = Field(None, description="TWS API server version (when connected).")
     connected_since: datetime | None = None
+    last_disconnect_at: datetime | None = Field(
+        None,
+        description=(
+            "When the connection last went down (UTC), kept after it comes back, so with "
+            "connected_since it gives the last outage window. If the gateway was already down "
+            "when this server started, the server's start time (the outage may be older). Null "
+            "while no outage has been seen."
+        ),
+    )
     last_error: ErrorInfo | None = None
+    login_state: LoginState | None = Field(
+        None,
+        description=(
+            "The gateway's login phase, read from its launcher.log; null unless "
+            "IB_GATEWAY_SETTINGS_DIR is set."
+        ),
+    )
     api_read_only: bool = Field(
         False, description="The gateway rejected a request because its API is read-only (321)."
     )

@@ -1,0 +1,52 @@
+2026-08-31 22:15:44.266 INFO  [JTS-GstatMessageMgr-26] - Received response [errorCode=204,contentLen=-1].
+2026-08-31 22:15:44.269 INFO  [JavaFX Application Thread] - GstatMessagePanel: bridge already created
+2026-08-31 22:15:44.269 INFO  [JavaFX Application Thread] - GstatMessagePanel: setup web app is done
+2026-08-31 22:18:44.266 INFO  [JTS-GstatMessageMgr-26] - Sending a request to GSTAT [url=https://server.example/v1/gstat//bulletins,data='{"p":"10501e","t":"Maintenance","tz":"Asia/Kolkata","peer":"server.example","format":"webapp","theme":"dark","fontSize":"12px","lang":"en","user":"***","ut":"paper"}']...
+2026-08-31 22:18:44.382 INFO  [JTS-GstatMessageMgr-26] - Received response [errorCode=204,contentLen=-1].
+2026-08-31 22:18:44.385 INFO  [JavaFX Application Thread] - GstatMessagePanel: bridge already created
+2026-08-31 22:18:44.385 INFO  [JavaFX Application Thread] - GstatMessagePanel: setup web app is done
+2026-08-31 22:20:09.850 INFO  [JTS-DeadlockMonitor-2] - Memory:total=786,432KB free=748,188KB HeapUsage: Max=786,432KB used=37,946KB committed=70,656KB NonHeapUsage: Max=0KB used=91,629KB committed=102,720KB
+2026-08-31 22:20:09.850 WARN  [JTS-DeadlockMonitor-2] - instance of control is not created yet
+2026-08-31 22:20:10.851 INFO  [JTS-DeadlockMonitor-2] - CPU:cur=0.02% avg=0.04% 30 min avg=0.04% 10 min avg=0.04% 5 min avg=0.04% 1 min avg=0.02%
+GC:called=197 times CPU used=0.00%
+Finalizer:cur=0.00% avg=0.00% 30 min avg=0.00% 10 min avg=0.00% 5 min avg=0.00% 1 min avg=0.00%
+Threads Count:curr live=27 curr daemon=18
+2026-08-31 22:21:44.383 INFO  [JTS-GstatMessageMgr-26] - Sending a request to GSTAT [url=https://server.example/v1/gstat//bulletins,data='{"p":"10501e","t":"Maintenance","tz":"Asia/Kolkata","peer":"server.example","format":"webapp","theme":"dark","fontSize":"12px","lang":"en","user":"***","ut":"paper"}']...
+2026-08-31 22:21:44.509 INFO  [JTS-GstatMessageMgr-26] - Received response [errorCode=204,contentLen=-1].
+2026-08-31 22:21:44.513 INFO  [JavaFX Application Thread] - GstatMessagePanel: bridge already created
+2026-08-31 22:21:44.513 INFO  [JavaFX Application Thread] - GstatMessagePanel: setup web app is done
+2026-08-31 22:21:58.473 INFO  [JTS-Main] - ------------------------------- IB GATEWAY RESTART --------------------------------
+2026-08-31 22:21:58.543 INFO  [JTS-Main] - Setting custom timezone: Asia/Kolkata
+2026-08-31 22:21:59.012 INFO  [JTS-Main] - Build 10.50.1e, Aug 25, 2026 4:05:30 PM
+2026-08-31 22:21:59.365 INFO  [AWT-EventQueue-0] - Default timezone:Asia/Kolkata
+2026-08-31 22:21:59.383 INFO  [AWT-EventQueue-0] - Started on 20260831-16:51:59
+2026-08-31 22:21:59.383 INFO  [AWT-EventQueue-0] - Default timezone:Asia/Kolkata name:India Standard Time dst:0
+2026-08-31 22:21:59.604 INFO  [JTS-AuthDispatcherS1-7] - Disconnecting server.example:4001 (SSL) [disconnectDetails=DisconnectDetails[sessionID=1,endPoint=server.example:4001 (SSL),reason=DISCONNECT_BY_DESIGN,cause=null,systemMessage=null,keepSocketOpen=false]]...
+2026-08-31 22:21:59.634 INFO  [AWT-EventQueue-0] - OvernightManager.dayInit: new values: dayOfTheWeek: 2 (Mon), YYYYMMofToday: 202608, YYYYMMDDofToday: 20260831, m_todayDate: 20260831, dueToChangeInTimezone: false
+2026-08-31 22:21:59.712 INFO  [AWT-EventQueue-0] - Stopping GstatMessageMgr...
+2026-08-31 22:21:59.804 INFO  [AWT-EventQueue-0] - Contacting server.example:4001 as user NOT PRINTED
+2026-08-31 22:21:59.812 INFO  [JTS-Login-14] - Starting launcher login thread
+2026-08-31 22:21:59.813 INFO  [JTS-Login-14] - LauncherLoginThread.runLoginWithUI()[hotBackupStrategy=ON,loginAttempt=1,socketDelay=20000].
+2026-08-31 22:21:59.813 INFO  [JTS-Login-14] - SPLASH Connecting to server
+2026-08-31 22:21:59.816 INFO  [JTS-Login-14] - ### startLogin startTime=1788195119812
+2026-08-31 22:21:59.816 INFO  [JTS-Login-14] - ### loginAttempt loginAttempt=1
+2026-08-31 22:21:59.817 INFO  [JTS-Login-14] - ### onSocketOpenStart socketOpenStart=1788195119816; endPoint=server.example; port=4001
+2026-08-31 22:21:59.882 INFO  [JTS-Login-14] - ### onSocketOpenEnd socketOpenEnd=1788195119881
+2026-08-31 22:21:59.888 INFO  [JTS-Login-14] - ### onNsMsg loginMessageReq=1788195119887; brandNewUser=false
+2026-08-31 22:22:00.084 INFO  [JTS-Login-14] - SPLASH Authenticating
+2026-08-31 22:22:00.149 INFO  [JTS-AuthDispatcherS2-18] - Received NS_AUTH_START: 1
+2026-08-31 22:22:00.149 INFO  [JTS-AuthDispatcherS2-18] - pwd time to expiry ms: 2311762080000 days: 26757
+2026-08-31 22:22:00.150 INFO  [JTS-AuthDispatcherS2-18] -  NS_AUTH_START version=52 pwd=1 soft=0 token(s)=[token=0] initialTokenType=PWD authenticationType=MARKET_DATA_CONNECTION identityHashcode=1
+2026-08-31 22:22:00.150 INFO  [JTS-AuthDispatcherS2-18] - Resetting session token (password auth)...
+2026-08-31 22:22:00.151 INFO  [JTS-AuthDispatcherS2-18] - Starting password Authentication
+2026-08-31 22:22:00.348 INFO  [JTS-AuthDispatcherS2-18] - Received AUTH_RESULT
+2026-08-31 22:22:00.348 INFO  [JTS-AuthDispatcherS2-18] - Passed pwd authentication.
+2026-08-31 22:22:00.348 INFO  [JTS-AuthDispatcherS2-18] - Authentication completed.
+2026-08-31 22:22:00.349 INFO  [JTS-AuthDispatcherS2-18] - ### onAuthenticationCompleted tokenProtocol=0; authenticated=true
+2026-08-31 22:22:00.352 INFO  [JTS-AuthDispatcherS2-18] - Received CCP connect features: [TST, ONELOGON].
+2026-08-31 22:22:00.353 INFO  [JTS-AuthDispatcherS2-18] - CCP sent paperUser NOT PRINTED for prodUser NOT PRINTED
+2026-08-31 22:22:00.358 INFO  [JTS-AuthDispatcherS2-18] - Daily auto-restart is not enabled.
+2026-08-31 22:22:00.421 INFO  [JTS-AuthDispatcherS2-18] - Received NS_FIX_START
+2026-08-31 22:22:00.422 INFO  [JTS-PostAuthenticateS2-25] - Authentication complete
+2026-08-31 22:22:00.430 INFO  [JTS-PostAuthenticateS2-25] - performLogSwitch() [force=false]
+2026-08-31 22:22:00.432 INFO  [JTS-PostAuthenticateS2-25] - Switching to a new encrypted log...

@@ -49,6 +49,13 @@ jobs:
             echo "::error::tag $GITHUB_REF_NAME does not match version $version in pyproject.toml"
             exit 1
           fi
+          # The agent skill names the release it was written for; tests tie the README's
+          # skill install tags to it.
+          skill=$(sed -n 's/^  version: "\(.*\)"$/\1/p' skills/ib-gateway-mcp/SKILL.md)
+          if [ "$skill" != "$version" ]; then
+            echo "::error::skills/ib-gateway-mcp/SKILL.md metadata.version '$skill' does not match $version"
+            exit 1
+          fi
           prerelease=false
           case "$version" in *-*) prerelease=true ;; esac
           echo "version=$version" >> "$GITHUB_OUTPUT"

@@ -24,6 +24,8 @@ from ib_gateway_mcp.models.ops import (
 )
 
 
+# Some clients show only the first line of a description, so it stays one whole sentence
+# (hence the noqa on the docstring); the whole description stays within 2,048 characters.
 @ib_tool("ops", Tier.READ, "Gateway health")
 async def get_health(
     ctx: ToolContext,
@@ -37,25 +39,34 @@ async def get_health(
         ),
     ] = False,
 ) -> HealthReport:
-    """Report whether the Interactive Brokers gateway connection is usable, and why not.
+    """Report whether the Interactive Brokers gateway connection is usable, and what is known about why not.
 
     Call this first when another tool fails with not_connected or times out. It never
     fails itself. `state` is one of:
     - connected: everything works.
     - connecting: a connection attempt is in progress.
-    - not_accepting: the gateway refused or ignored the connection (it is down, logged out,
-      or waiting for the user to approve 2FA). Retries run in the background.
+    - not_accepting: the gateway refused or ignored the connection; this alone doesn't say
+      why. Retries run in the background.
     - connectivity_lost: the gateway is up but cut off from IBKR's servers; usually heals.
     - not_connected: stopped, or the connection dropped and a retry is pending.
-    `hint` explains what to do. `trading_enabled` says whether the trading gate is open
-    (order tools also need `circuit_open` false: after repeated IBKR rejections the
-    circuit breaker halts order submits until a human resets it). `api_read_only` means
-    the gateway's own settings reject orders. `is_paper` is true when the login only has
-    paper accounts. `market_data_type` is the data type requested for this session
-    (set_market_data_type changes it), and `subscriptions_used`/`subscriptions_max` show
-    how many streams are open. Pass probe=true to test the connection with a real
-    request (the state alone can lag behind a stalled socket).
-    """
+    `hint` explains what to do. `last_disconnect_at` is when the connection last went down,
+    kept after it comes back (this server's start time if it started during the outage).
+    `login_state` (if configured) is the gateway's login phase: restarting or logging_in
+    (in progress), awaiting_2fa (the account holder must approve a challenge), throttled
+    (paused until retry_at; it logs in again then only if its login automation is set to
+    retry), login_rejected (it won't retry), login_idle (nothing is retrying), unknown
+    (detail says why), or logged_in, which only means the last login in the gateway's log
+    succeeded; later events aren't logged there, and an old log_updated_at is normal then.
+    Without login_state, relay hint and report last_disconnect_at; don't guess a cause the
+    hint doesn't name.
+    `trading_enabled` says whether the trading gate is open (order tools also need
+    `circuit_open` false: after repeated IBKR rejections the breaker halts submits until a
+    human resets it). `api_read_only` means the gateway's own settings reject orders.
+    `is_paper` is true when the login only has paper accounts. `market_data_type` is the
+    requested data type (set_market_data_type), and `subscriptions_used`/`subscriptions_max`
+    count open streams. Pass probe=true to test the connection with a real request (the
+    state alone can lag behind a stalled socket).
+    """  # noqa: E501
     return await gateway_from(ctx).ops.health_report(probe=probe)
 
 

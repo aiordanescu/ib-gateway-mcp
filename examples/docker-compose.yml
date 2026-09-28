@@ -34,9 +34,23 @@
 name: ib-gateway-mcp
 
 services:
+  # Docker creates a new named volume owned by root when the image has no such path, and
+  # the gateway runs as uid 1000: this one-shot service gives the settings volume to the
+  # gateway's user before it starts (a no-op on later starts).
+  tws-settings-init:
+    image: ghcr.io/gnzsnz/ib-gateway:stable
+    user: "0:0"
+    entrypoint: ["chown", "1000:1000", "/home/ibgateway/tws_settings"]
+    volumes:
+      - tws_settings:/home/ibgateway/tws_settings
+    restart: "no"
+
   ib-gateway:
     image: ghcr.io/gnzsnz/ib-gateway:stable
     restart: always
+    depends_on:
+      tws-settings-init:
+        condition: service_completed_successfully
     environment:
       TWS_USERID: ${TWS_USERID:?set TWS_USERID in .env}
       # From a file, so the password is not in the container's environment.
@@ -44,8 +58,9 @@ services:
       TRADING_MODE: paper
       READ_ONLY_API: ${READ_ONLY_API:-yes}
       TWOFA_TIMEOUT_ACTION: ${TWOFA_TIMEOUT_ACTION:-exit}
-      # Keeps the gateway's settings across restarts. Before switching TRADING_MODE to
-      # both, read TWS_SETTINGS_PATH in ib-gateway-docker's README: the path changes.
+      # Keeps the gateway's settings across restarts, and puts its launcher.log where
+      # ib-gateway-mcp can read it. With TRADING_MODE=both the gateway appends _live and
+      # _paper to this path: see "Gateway login state" in ib-gateway-mcp's README.
       TWS_SETTINGS_PATH: /home/ibgateway/tws_settings
       TIME_ZONE: ${TIME_ZONE:-Etc/UTC}
       TZ: ${TIME_ZONE:-Etc/UTC}
@@ -69,6 +84,9 @@ services:
       IB_HOST: ib-gateway
       IB_PORT: "4004"
       IB_CLIENT_ID: "80"
+      # The gateway's settings volume, mounted below: get_health reports the gateway's
+      # login phase (login_state) from its launcher.log.
+      IB_GATEWAY_SETTINGS_DIR: /gateway/tws_settings
       IBKR_MCP_PROFILE: ${IBKR_MCP_PROFILE:-readonly}
       IBKR_MCP_AUTH_TOKEN_FILE: /run/secrets/mcp_auth_token
       # Every preview, order, cancel and FA change; an open circuit breaker is kept
@@ -82,6 +100,17 @@ services:
       - mcp_auth_token
     volumes:
       - mcp_audit:/audit
+      # Read-only. The long syntax takes nocopy, and the target is not a path in this
+      # image, so nothing is copied from the image into the gateway's volume. The
+      # directory holds IP and MAC addresses, session ids and an encoded user
+      # identifier, among other things; the server reads only launcher*.log and
+      # returns the parsed state, never log text.
+      - type: volume
+        source: tws_settings
+        target: /gateway/tws_settings
+        read_only: true
+        volume:
+          nocopy: true
     ports:
       - "127.0.0.1:8000:8000"
     read_only: true

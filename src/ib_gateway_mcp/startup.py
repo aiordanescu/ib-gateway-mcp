@@ -5,20 +5,28 @@ writes (profile, live trading, confirmation, limits, rates, breaker, audit file)
 WARNING for each risky combination, so an operator reading the log sees how the server
 is armed. :func:`check_audit_log` refuses to start a server that may write when its
 audit file cannot be written. The MCP server and :meth:`~ib_gateway_mcp.gateway.Gateway.start`
-call both.
+call both. :meth:`~ib_gateway_mcp.gateway.Gateway.start` also runs
+:func:`check_gateway_settings_dir` when ``IB_GATEWAY_SETTINGS_DIR`` is set: it logs what
+is wrong with that directory but never stops the start.
 """
 
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
 from ib_gateway_mcp.config import Settings, enabled_toolsets
 from ib_gateway_mcp.errors import ConfigurationError
 from ib_gateway_mcp.safety import AuditLog, OrderPolicy
 from ib_gateway_mcp.safety.rails import breaker_state_path
 
+if TYPE_CHECKING:
+    from ib_gateway_mcp._gateway_log import GatewayLog
+
 __all__ = [
+    "GATEWAY_SETTINGS_CHECK_TIMEOUT",
     "check_audit_log",
+    "check_gateway_settings_dir",
     "limits_summary",
     "log_safety_configuration",
     "risky_settings",
@@ -26,6 +34,10 @@ __all__ = [
 ]
 
 logger = logging.getLogger(__name__)
+
+GATEWAY_SETTINGS_CHECK_TIMEOUT = 2.0
+"""Seconds the start-up check of ``IB_GATEWAY_SETTINGS_DIR`` may take, so a hung mount
+cannot hold up the start."""
 
 
 def _switch(value: bool) -> str:
@@ -121,3 +133,25 @@ def log_safety_configuration(settings: Settings) -> None:
     logger.info("%s", safety_summary(settings))
     for warning in risky_settings(settings):
         logger.warning("%s", warning)
+
+
+async def check_gateway_settings_dir(gateway_log: GatewayLog) -> list[str]:
+    """Check ``IB_GATEWAY_SETTINGS_DIR`` once at start-up and log the outcome; never raises.
+
+    Each problem (the directory can't be read, holds no launcher.log, or is writable by
+    this server) is logged at WARNING; ``get_health`` keeps working and reports
+    ``login_state`` as well as it can. Without a problem, one INFO line names the
+    directory. The check runs off the event loop and gives up after
+    :data:`GATEWAY_SETTINGS_CHECK_TIMEOUT` seconds. :meth:`GatewayLog.check_async` turns a
+    failure, a timeout or a stuck earlier check into a problem sentence, so the start never
+    fails over it.
+
+    Returns:
+        The problems, as logged (empty when the directory looks right).
+    """
+    problems = await gateway_log.check_async(GATEWAY_SETTINGS_CHECK_TIMEOUT)
+    for problem in problems:
+        logger.warning("IB_GATEWAY_SETTINGS_DIR: %s.", problem)
+    if not problems:
+        logger.info("Reading the gateway's login phase from %s.", gateway_log.directory)
+    return problems

@@ -7,6 +7,7 @@ import gc
 import itertools
 import time
 from collections.abc import Callable
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
@@ -32,6 +33,7 @@ from tests.fakes import (
     FIXED_TIME,
     LIVE_ACCOUNT,
     PAPER_ACCOUNT,
+    FakeClock,
     drop_connection,
     emit_error,
     make_fake_ib,
@@ -766,6 +768,287 @@ async def test_wait_connected(settings: Settings, fake_ib: MagicMock) -> None:
     await ok.start()
     await ok.wait_connected(1)
     await ok.stop()
+
+
+# --- the outage window and unexplained refusals -------------------------------------------
+
+
+@pytest.fixture
+def clock(monkeypatch: pytest.MonkeyPatch) -> FakeClock:
+    """Drives the connection manager's UTC timestamps."""
+    fake = FakeClock()
+    monkeypatch.setattr(connection_module, "utc_now", fake.now)
+    return fake
+
+
+async def test_last_disconnect_at_spans_the_last_outage(
+    settings: Settings, fake_ib: MagicMock, clock: FakeClock
+) -> None:
+    connect = fake_ib.connectAsync.side_effect
+    cm = manager(settings, fake_ib)
+    assert cm.health().last_disconnect_at is None  # before the first attempt
+    await cm.start()
+    try:
+        # Up at the first attempt: no outage seen, so no phantom one at the start time.
+        assert cm.state is ConnectionState.CONNECTED
+        assert cm.health().last_disconnect_at is None
+
+        clock.advance(3600)
+        dropped = clock.now()
+        fake_ib.connectAsync.side_effect = ConnectionRefusedError(61, "Connection refused")
+        drop_connection(fake_ib)
+        assert cm.last_disconnect_at == dropped
+        clock.advance(60)
+        await eventually(lambda: fake_ib.connectAsync.await_count >= 3)
+        assert cm.state is ConnectionState.NOT_ACCEPTING
+        assert cm.health().last_disconnect_at == dropped  # failed retries don't move it
+
+        clock.advance(60)
+        fake_ib.connectAsync.side_effect = connect
+        await eventually(lambda: cm.state is ConnectionState.CONNECTED)
+        health = cm.health()
+        assert health.last_disconnect_at == dropped  # kept after it comes back
+        assert health.connected_since == clock.now()
+
+        clock.advance(60)
+        emit_error(fake_ib, 1100, "Connectivity between IB and TWS has been lost.")
+        assert cm.state is ConnectionState.CONNECTIVITY_LOST
+        assert cm.last_disconnect_at == dropped  # the API session is still up
+        clock.advance(60)
+        drop_connection(fake_ib)  # a drop while cut off from IBKR is a drop too
+        assert cm.last_disconnect_at == clock.now()
+        await eventually(lambda: cm.state is ConnectionState.CONNECTED)
+    finally:
+        clock.advance(60)
+        await cm.stop()
+    assert cm.last_disconnect_at == clock.now()  # stopping a session takes it down
+    await cm.start()  # a restart keeps it: the connection is down since the stop
+    try:
+        assert cm.last_disconnect_at == clock.now()
+    finally:
+        await cm.stop()
+
+
+async def test_a_server_started_during_an_outage_dates_it_from_its_start(
+    settings: Settings, fake_ib: MagicMock, clock: FakeClock
+) -> None:
+    """The gateway was down before the manager started: its start time is a lower bound."""
+    connect = fake_ib.connectAsync.side_effect
+    fake_ib.connectAsync.side_effect = ConnectionRefusedError(61, "Connection refused")
+    cm = manager(settings, fake_ib)
+    started = clock.now()
+    await cm.start()
+    try:
+        assert cm.state is ConnectionState.NOT_ACCEPTING
+        assert cm.last_disconnect_at == started
+        clock.advance(60)
+        await eventually(lambda: fake_ib.connectAsync.await_count >= 3)
+        assert cm.last_disconnect_at == started  # failed retries don't move it
+
+        clock.advance(60)
+        fake_ib.connectAsync.side_effect = connect
+        await eventually(lambda: cm.state is ConnectionState.CONNECTED)
+        health = cm.health()
+        assert health.last_disconnect_at == started  # kept: the outage it came up from
+        assert health.connected_since == clock.now()
+
+        clock.advance(3600)
+        drop_connection(fake_ib)  # a real drop later dates from the drop
+        assert cm.last_disconnect_at == clock.now()
+        await eventually(lambda: cm.state is ConnectionState.CONNECTED)
+    finally:
+        await cm.stop()
+
+
+async def test_a_session_that_never_came_up_dates_the_outage_from_the_start(
+    settings_factory: Callable[..., Settings], fake_ib: MagicMock, clock: FakeClock
+) -> None:
+    """Connected, then dropped while setting up: the session never came up."""
+    cm = manager(settings_factory(profile="trading"), fake_ib)
+
+    async def drop_during_sync(*_args: Any) -> list[object]:
+        clock.advance(5)
+        fake_ib.disconnect()
+        return []
+
+    fake_ib.reqOpenOrdersAsync.side_effect = drop_during_sync
+    started = clock.now()
+    await cm.start()
+    try:
+        assert cm.state is ConnectionState.NOT_CONNECTED
+        assert cm.last_disconnect_at == started
+    finally:
+        await cm.stop()
+
+
+async def test_a_stop_before_the_first_session_is_no_outage(
+    settings: Settings, fake_ib: MagicMock, clock: FakeClock
+) -> None:
+    fake_ib.connectAsync.side_effect = pending()
+    cm = manager(settings, fake_ib)
+    await cm.start(wait=0)
+    await cm.stop()
+    assert cm.last_disconnect_at is None
+
+    # Started again later: an outage seen then dates from that start.
+    clock.advance(600)
+    restarted = clock.now()
+    fake_ib.connectAsync.side_effect = ConnectionRefusedError(61, "Connection refused")
+    await cm.start()
+    try:
+        assert cm.last_disconnect_at == restarted
+    finally:
+        await cm.stop()
+    assert cm.last_disconnect_at == restarted  # a stop doesn't move it
+
+
+async def test_a_drop_during_a_reconnects_order_sync_keeps_the_first_drop_time(
+    settings_factory: Callable[..., Settings], fake_ib: MagicMock, clock: FakeClock
+) -> None:
+    """The half-finished session never came up, so the outage began at the first drop."""
+    cm = manager(settings_factory(profile="trading"), fake_ib)
+    await cm.start()
+    syncs = 0
+
+    async def drop_during_first_sync(*_args: Any) -> list[object]:
+        nonlocal syncs
+        syncs += 1
+        if syncs == 1:
+            clock.advance(30)
+            fake_ib.disconnect()
+        return []
+
+    try:
+        assert cm.orders_synced is True
+        fake_ib.reqOpenOrdersAsync.side_effect = drop_during_first_sync
+        clock.advance(3600)
+        dropped = clock.now()
+        drop_connection(fake_ib)
+        await eventually(lambda: syncs >= 2 and cm.state is ConnectionState.CONNECTED)
+        assert cm.health().last_disconnect_at == dropped
+        assert cm.connected_since is not None
+        assert cm.connected_since > dropped
+    finally:
+        await cm.stop()
+
+
+@pytest.mark.parametrize(
+    ("error", "unexplained"),
+    [
+        (ConnectionRefusedError(61, "Connection refused"), True),
+        (TimeoutError(), True),
+        (connection_module._PeerClosedError("peer closed the connection"), True),
+        (OSError(8, "nodename nor servname provided"), False),
+        (ValueError("weird"), False),
+    ],
+)
+async def test_refusal_unexplained(
+    settings: Settings, fake_ib: MagicMock, error: BaseException, unexplained: bool
+) -> None:
+    failing_then_connecting(fake_ib, error)
+    cm = manager(settings, fake_ib)
+    assert cm.refusal_unexplained is False
+    await cm.start()
+    try:
+        assert cm.refusal_unexplained is unexplained
+        await eventually(lambda: cm.state is ConnectionState.CONNECTED)
+        assert cm.refusal_unexplained is False
+    finally:
+        await cm.stop()
+
+
+async def test_a_client_id_clash_is_not_an_unexplained_refusal(
+    settings: Settings, fake_ib: MagicMock
+) -> None:
+    async def clash(*_args: Any, **_kwargs: Any) -> Any:
+        emit_error(fake_ib, 326, "Unable to connect as the client id is already in use.")
+        raise TimeoutError
+
+    fake_ib.connectAsync.side_effect = clash
+    cm = manager(settings, fake_ib)
+    await cm.start()
+    try:
+        assert cm.state is ConnectionState.NOT_ACCEPTING
+        assert cm.refusal_unexplained is False
+    finally:
+        await cm.stop()
+
+    # A 326 that arrives after a timed-out attempt explains it too.
+    fake_ib.connectAsync.side_effect = TimeoutError()
+    cm = manager(settings, fake_ib)
+    await cm.start()
+    try:
+        assert cm.refusal_unexplained is True
+        emit_error(fake_ib, 326, "Unable to connect as the client id is already in use.")
+        assert cm.refusal_unexplained is False
+    finally:
+        await cm.stop()
+
+
+@pytest.mark.parametrize(
+    ("sent", "tcp_timeout"),
+    [
+        (0, True),  # nothing sent: the TCP connect itself timed out
+        (1, False),  # the API greeting went out: the gateway ignored the handshake
+        (None, False),  # the count is unknown (no socket on the double)
+        (MagicMock(), False),  # not a count
+    ],
+)
+async def test_a_tcp_connect_timeout_is_not_an_unexplained_refusal(
+    settings: Settings, fake_ib: MagicMock, sent: object, tcp_timeout: bool
+) -> None:
+    """ib_async sends its API greeting as soon as the socket connects."""
+    if sent is not None:
+        fake_ib.client.conn = SimpleNamespace(numMsgSent=sent)
+    fake_ib.connectAsync.side_effect = TimeoutError()
+    cm = manager(settings, fake_ib)
+    await cm.start()
+    try:
+        health = cm.health()
+        assert health.state is ConnectionState.NOT_ACCEPTING
+        assert cm.refusal_unexplained is not tcp_timeout
+        if tcp_timeout:
+            assert health.hint == (
+                "Cannot reach the gateway at 127.0.0.1:4004: no answer to the TCP connect "
+                "within 1s (host down, a firewall dropping packets, or the wrong IB_HOST). "
+                "Retrying in the background."
+            )
+        else:
+            assert health.hint == connection_module.HINT_HANDSHAKE_TIMEOUT
+    finally:
+        await cm.stop()
+
+
+@pytest.mark.parametrize(
+    ("configured", "error", "pointer"),
+    [
+        (True, ConnectionRefusedError(61, "Connection refused"), True),
+        (True, TimeoutError(), True),
+        (True, OSError(8, "nodename nor servname provided"), False),
+        (False, ConnectionRefusedError(61, "Connection refused"), False),
+    ],
+)
+async def test_not_connected_points_to_the_login_phase_when_it_can_help(
+    settings_factory: Callable[..., Settings],
+    fake_ib: MagicMock,
+    configured: bool,
+    error: BaseException,
+    pointer: bool,
+) -> None:
+    # The manager never reads the directory; only the setting matters here.
+    directory = Path("/gateway/tws_settings") if configured else None
+    settings = settings_factory(gateway_settings_dir=directory)
+    fake_ib.connectAsync.side_effect = error
+    cm = manager(settings, fake_ib)
+    await cm.start()
+    try:
+        with pytest.raises(NotConnectedError) as info:
+            _ = cm.ib
+    finally:
+        await cm.stop()
+    message = str(info.value)
+    assert message.startswith("Not connected to the gateway (not_accepting).")
+    assert message.endswith(f" {connection_module.LOGIN_PHASE_POINTER}") is pointer
 
 
 async def test_user_info_shim_delivers_the_white_branding_id() -> None:

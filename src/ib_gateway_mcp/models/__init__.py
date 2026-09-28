@@ -175,6 +175,8 @@ from ib_gateway_mcp.models.ops import (
     ErrorInfo,
     HealthProbe,
     HealthReport,
+    LoginPhase,
+    LoginState,
     ServerTime,
     UserInfo,
 )
@@ -310,6 +312,8 @@ __all__ = [
     "ImpliedVolatilityOut",
     "LiveBarSize",
     "LiveBarsData",
+    "LoginPhase",
+    "LoginState",
     "MarketDataNotice",
     "MarketDataTypeName",
     "MarketDataTypeOut",

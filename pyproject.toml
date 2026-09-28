@@ -63,13 +63,14 @@ build-backend = "uv_build"
 required-version = ">=0.12.5,<0.13"
 
 [tool.uv.build-backend]
-# The sdist carries the test suite (placeholders only) and the docs it checks, so
-# packagers can run it.
+# The sdist carries the test suite (placeholders only) and the docs and agent skill it
+# checks, so packagers can run it.
 source-include = [
     "tests/**",
     "docs/tools.md",
     "docs/coverage.md",
     "scripts/gen_docs.py",
+    "skills/**",
     "CHANGELOG.md",
 ]
 source-exclude = ["**/__pycache__"]
@@ -82,6 +83,7 @@ dev = [
     "pytest-asyncio>=1.4.0",
     "pytest-cov>=7.1.0",
     "ruff>=0.16.8",
+    "skills-ref>=0.1.1",
 ]
 
 # --- ruff -----------------------------------------------------------------
@@ -139,6 +141,11 @@ untyped_calls_exclude = ["ib_async"]
 
 [[tool.mypy.overrides]]
 module = ["eventkit", "eventkit.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# skills-ref (the Agent Skills reference validator, a test dependency) ships no type hints.
+module = ["skills_ref", "skills_ref.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import UTC, datetime
+from typing import Any
 
 import pytest
 
@@ -394,6 +395,26 @@ async def test_handshake_never_answered_times_out(
     assert health.state is ConnectionState.NOT_ACCEPTING
     assert health.hint == HINT_HANDSHAKE_TIMEOUT
     assert fake_tws.connections  # the socket was accepted
+    assert gw.connection.refusal_unexplained is True  # the API greeting went out
+
+
+async def test_no_answer_to_the_tcp_connect_is_an_unreachable_host(
+    gateway_factory: GatewayFactory, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A blackholed host: the TCP connect gets no answer, so no API greeting is sent."""
+
+    async def unanswered(*_args: Any, **_kwargs: Any) -> Any:
+        return await asyncio.get_running_loop().create_future()  # never completes
+
+    monkeypatch.setattr(asyncio.get_running_loop(), "create_connection", unanswered)
+    gw = gateway_factory(connect_timeout=0.3)
+    await gw.start()
+    health = gw.health()
+    assert health.state is ConnectionState.NOT_ACCEPTING
+    assert health.hint is not None
+    assert health.hint.startswith(f"Cannot reach the gateway at 127.0.0.1:{health.port}: ")
+    assert "no answer to the TCP connect within 0.3s" in health.hint
+    assert gw.connection.refusal_unexplained is False
 
 
 def _aapl() -> ContractSpec:

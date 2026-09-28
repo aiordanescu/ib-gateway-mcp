@@ -1,0 +1,43 @@
+2026-08-28 22:31:37.184 INFO  [JTS-PostAuthenticateS3-37] - Switching to a new encrypted log...
+2026-08-29 11:00:02.112 INFO  [JTS-Main] - ------------------------------- IB GATEWAY RESTART --------------------------------
+2026-08-29 11:00:02.202 INFO  [JTS-Main] - Setting custom timezone: Asia/Kolkata
+2026-08-29 11:00:02.579 INFO  [JTS-Main] - Build 10.50.1e, Aug 25, 2026 4:05:30 PM
+2026-08-29 11:00:02.774 INFO  [AWT-EventQueue-0] - Running in auto-restart mode: restoring session token and session ID [userDirname=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa]...
+2026-08-29 11:00:02.774 INFO  [AWT-EventQueue-0] - Reading data from '/home/ibgateway/tws_settings_live/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/autorestart'...
+2026-08-29 11:00:02.778 INFO  [AWT-EventQueue-0] - AutoRestartDescriptor[autoRestartType=DAILY,sessionId=00000000.0000,sessionToken=XYZSessionToken[type=TST,token=00000XXXXX..],paperMode=false,m_ctciMktDataAuth=true,publishTime=0]
+2026-08-29 11:00:02.778 INFO  [AWT-EventQueue-0] - Deleting '/home/ibgateway/tws_settings_live/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/autorestart'...
+2026-08-29 11:00:03.026 INFO  [AWT-EventQueue-0] - Default timezone:Asia/Kolkata
+2026-08-29 11:00:03.051 INFO  [AWT-EventQueue-0] - Started on 20260829-05:30:03
+2026-08-29 11:00:03.051 INFO  [AWT-EventQueue-0] - Default timezone:Asia/Kolkata name:India Standard Time dst:0
+2026-08-29 11:00:03.128 INFO  [JTS-AuthDispatcherS1-7] - Disconnecting server.example:4001 (SSL) [disconnectDetails=DisconnectDetails[sessionID=1,endPoint=server.example:4001 (SSL),reason=DISCONNECT_BY_DESIGN,cause=null,systemMessage=null,keepSocketOpen=false]]...
+2026-08-29 11:00:03.252 INFO  [AWT-EventQueue-0] - Stopping GstatMessageMgr...
+2026-08-29 11:00:03.360 INFO  [AWT-EventQueue-0] - Contacting server.example:4001 as user NOT PRINTED
+2026-08-29 11:00:03.369 INFO  [JTS-Login-14] - Starting launcher login thread
+2026-08-29 11:00:03.370 INFO  [JTS-Login-14] - LauncherLoginThread.runLoginWithUI()[hotBackupStrategy=ON,loginAttempt=1,socketDelay=20000].
+2026-08-29 11:00:03.370 INFO  [JTS-Login-14] - SPLASH Connecting to server
+2026-08-29 11:00:03.371 INFO  [JTS-Login-14] - ### startLogin startTime=1787981403368
+2026-08-29 11:00:03.371 INFO  [JTS-Login-14] - ### loginAttempt loginAttempt=1
+2026-08-29 11:00:03.372 INFO  [JTS-Login-14] - ### onSocketOpenStart socketOpenStart=1787981403371; endPoint=server.example; port=4001
+2026-08-29 11:00:03.431 INFO  [AWT-EventQueue-0] - OvernightManager.dayInit: new values: dayOfTheWeek: 7 (Sat), YYYYMMofToday: 202608, YYYYMMDDofToday: 20260829, m_todayDate: 20260829, dueToChangeInTimezone: false
+2026-08-29 11:00:03.436 INFO  [JTS-Login-14] - ### onSocketOpenEnd socketOpenEnd=1787981403435
+2026-08-29 11:00:03.441 INFO  [JTS-Login-14] - ### onNsMsg loginMessageReq=1787981403440; brandNewUser=false
+2026-08-29 11:00:03.634 INFO  [JTS-Login-14] - SPLASH Authenticating
+2026-08-29 11:00:03.702 INFO  [JTS-AuthDispatcherS2-18] - Received NS_AUTH_START: 1
+2026-08-29 11:00:03.703 INFO  [JTS-AuthDispatcherS2-18] - pwd time to expiry ms: 2311975797000 days: 26759
+2026-08-29 11:00:03.703 INFO  [JTS-AuthDispatcherS2-18] -  NS_AUTH_START version=52 pwd=0 soft=256 token(s)=[token=0] initialTokenType=TST authenticationType=MARKET_DATA_CONNECTION identityHashcode=1
+2026-08-29 11:00:03.704 INFO  [JTS-AuthDispatcherS2-18] - Starting soft token Authentication
+2026-08-29 11:00:03.770 INFO  [JTS-AuthDispatcherS2-18] - Session Token authentication: using token=XYZSessionToken[type=TST,token=00000XXXXX..]
+2026-08-29 11:00:03.837 INFO  [JTS-AuthDispatcherS2-18] - Received Result
+2026-08-29 11:00:03.837 INFO  [JTS-AuthDispatcherS2-18] - Passed session token authentication.
+2026-08-29 11:00:03.837 INFO  [JTS-AuthDispatcherS2-18] - Received Finish
+2026-08-29 11:00:03.837 INFO  [JTS-AuthDispatcherS2-18] - Finished authentication.
+2026-08-29 11:00:03.837 INFO  [JTS-AuthDispatcherS2-18] - Authentication completed.
+2026-08-29 11:00:03.838 INFO  [JTS-AuthDispatcherS2-18] - ### onAuthenticationCompleted tokenProtocol=0; authenticated=true
+2026-08-29 11:00:03.841 INFO  [JTS-AuthDispatcherS2-18] - Received CCP connect features: [SIGNPPR, TST, ONELOGON].
+2026-08-29 11:00:03.842 INFO  [JTS-AuthDispatcherS2-18] - CCP sent paperUser NOT PRINTED for prodUser NOT PRINTED
+2026-08-29 11:00:03.842 INFO  [JTS-AuthDispatcherS2-18] - Daily auto-restart is enabled.
+2026-08-29 11:00:03.842 INFO  [JTS-AuthDispatcherS2-18] - Converting TST token to SOFT [token=00000XXXXX..,prefix=00000000|00:00:5E:00:53:01ST]...
+2026-08-29 11:00:03.908 INFO  [JTS-AuthDispatcherS2-18] - Received NS_FIX_START
+2026-08-29 11:00:03.909 INFO  [JTS-PostAuthenticateS2-25] - Authentication complete
+2026-08-29 11:00:03.917 INFO  [JTS-PostAuthenticateS2-25] - performLogSwitch() [force=false]
+2026-08-29 11:00:03.920 INFO  [JTS-PostAuthenticateS2-25] - Switching to a new encrypted log...

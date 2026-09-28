@@ -47,26 +47,35 @@ No parameters.
 
 **Gateway health**: read-only. Library: `gw.ops.health_report()`.
 
-Report whether the Interactive Brokers gateway connection is usable, and why not.
+Report whether the Interactive Brokers gateway connection is usable, and what is known about why not.
 
 Call this first when another tool fails with not_connected or times out. It never
 fails itself. `state` is one of:
 
 - connected: everything works.
 - connecting: a connection attempt is in progress.
-- not_accepting: the gateway refused or ignored the connection (it is down, logged out,
-  or waiting for the user to approve 2FA). Retries run in the background.
+- not_accepting: the gateway refused or ignored the connection; this alone doesn't say
+  why. Retries run in the background.
 - connectivity_lost: the gateway is up but cut off from IBKR's servers; usually heals.
 - not_connected: stopped, or the connection dropped and a retry is pending.
 
-`hint` explains what to do. `trading_enabled` says whether the trading gate is open
-(order tools also need `circuit_open` false: after repeated IBKR rejections the
-circuit breaker halts order submits until a human resets it). `api_read_only` means
-the gateway's own settings reject orders. `is_paper` is true when the login only has
-paper accounts. `market_data_type` is the data type requested for this session
-(set_market_data_type changes it), and `subscriptions_used`/`subscriptions_max` show
-how many streams are open. Pass probe=true to test the connection with a real
-request (the state alone can lag behind a stalled socket).
+`hint` explains what to do. `last_disconnect_at` is when the connection last went down,
+kept after it comes back (this server's start time if it started during the outage).
+`login_state` (if configured) is the gateway's login phase: restarting or logging_in
+(in progress), awaiting_2fa (the account holder must approve a challenge), throttled
+(paused until retry_at; it logs in again then only if its login automation is set to
+retry), login_rejected (it won't retry), login_idle (nothing is retrying), unknown
+(detail says why), or logged_in, which only means the last login in the gateway's log
+succeeded; later events aren't logged there, and an old log_updated_at is normal then.
+Without login_state, relay hint and report last_disconnect_at; don't guess a cause the
+hint doesn't name.
+`trading_enabled` says whether the trading gate is open (order tools also need
+`circuit_open` false: after repeated IBKR rejections the breaker halts submits until a
+human resets it). `api_read_only` means the gateway's own settings reject orders.
+`is_paper` is true when the login only has paper accounts. `market_data_type` is the
+requested data type (set_market_data_type), and `subscriptions_used`/`subscriptions_max`
+count open streams. Pass probe=true to test the connection with a real request (the
+state alone can lag behind a stalled socket).
 
 | Parameter | Type | Required | Default | Description |
 |---|---|---|---|---|
@@ -1336,36 +1345,25 @@ errors.
 
 Check one order without sending it: limits, IBKR what-if, and a token to submit it.
 
-Nothing is placed. Returns the order as it would be sent, IBKR's what-if (initial and
-maintenance margin change, equity-with-loan change, commission estimate, warning
-text), the estimated notional, and a `token` for submit_order (single-use; valid
-until `expires_at`, 120 s by default, so preview again if the user takes longer).
-Show the user the summary and what-if before submitting.
+Nothing is placed. Returns the order as it would be sent, IBKR's what-if (margin and
+equity changes, commission estimate, warning text), the estimated notional, and a
+`token` for submit_order (single-use, valid until `expires_at`: preview again if the
+user takes longer). Show the user the summary and what-if before submitting.
 
-Prices by order_type: MKT and MOC none; LMT and LOC limit_price; STP aux_price
-(stop); STP LMT aux_price + limit_price; MIT aux_price (trigger); LIT aux_price +
-limit_price; TRAIL aux_price (trailing amount) or trailing_percent, optional
-trail_stop_price; TRAIL LIMIT as TRAIL but trail_stop_price is required, plus
-limit_price or limit_price_offset; REL optional aux_price (offset) and limit_price
-(cap); MIDPRICE optional limit_price (cap); PEG MID (pegged to the midpoint) optional
-aux_price (offset) and limit_price (cap); PEG MKT (pegged to the market) optional
-aux_price (offset).
-tif: DAY, GTC, IOC, FOK, GTD (needs good_till_date with a time zone), OPG (MKT/LMT at
-the open). good_after_time delays the start. algo (MKT/LMT, SMART only): Adaptive
-(priority Urgent/Normal/Patient), Twap, Vwap, ArrivalPx, PctVol (pct_vol of the
-market's volume), ClosePx (aims at the close). all_or_none, hidden (NASDAQ-routed
-only) and display_size (iceberg, less than quantity) shape the fill. model_code
-trades within an advisor model portfolio of the account; soft_dollar_tier {name,
-value} comes from get_soft_dollar_tiers. Not supported: order conditions, FA group
-allocation, cash quantity, PEG BEST and other exotic order types.
-Combos use preview_combo_order. Prices must sit on the contract's price increments
-(e.g. 0.01 for US stocks above 1.00); others are refused with invalid_request naming
-the nearest valid prices.
+Prices by order_type: MKT, MOC none; LMT, LOC limit_price; STP aux_price (stop); STP
+LMT aux_price + limit_price; MIT aux_price (trigger); LIT aux_price + limit_price;
+TRAIL aux_price (amount) or trailing_percent, optional trail_stop_price; TRAIL LIMIT
+as TRAIL plus trail_stop_price and limit_price or limit_price_offset; REL, PEG MID and
+PEG MKT optional aux_price (offset); REL, MIDPRICE and PEG MID optional limit_price
+(cap). The order's fields describe tif, algo, model_code and the other attributes.
+Not supported: order conditions, FA group allocation, cash quantity, exotic order
+types. Combos use preview_combo_order. Prices must sit on the contract's increments
+(0.01 for US stocks above 1.00).
 
-Errors: invalid_request (e.g. a price off the tick grid), order_limit (server limits
-on symbols, sec types, quantity, notional; a notional check needs a price, so market
-orders may need market data), not_found or ambiguous_contract, ib_api_error (IBKR
-rejected the what-if, e.g. 201 with the reason; 321 means the gateway API is
+Errors: invalid_request (e.g. a price off the tick grid, with the nearest valid
+prices), order_limit (server limits; under a notional limit every order but a BUY
+limit needs a market price, so market data), not_found or ambiguous_contract,
+ib_api_error (IBKR rejected the what-if, e.g. 201; 321 means the gateway API is
 read-only), account_not_allowed, live_trading_disabled or configuration_error when
 trading is off.
 

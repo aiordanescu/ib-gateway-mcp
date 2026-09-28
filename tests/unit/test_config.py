@@ -25,6 +25,7 @@ def test_defaults_match_the_documented_table() -> None:
     assert settings.ib_account is None
     assert settings.connect_timeout == 10.0
     assert settings.request_timeout == 30.0
+    assert settings.gateway_settings_dir is None
     assert settings.accounts_allowlist == []
     assert settings.profile == "readonly"
     assert settings.toolsets is None
@@ -162,6 +163,41 @@ def test_every_blank_variable_means_unset(monkeypatch: pytest.MonkeyPatch) -> No
 def test_blank_account_means_none(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("IB_ACCOUNT", "  ")
     assert Settings().ib_account is None
+
+
+def test_gateway_settings_dir_is_read_and_expanded(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setenv("IB_GATEWAY_SETTINGS_DIR", "/gateway/tws_settings")
+    assert Settings().gateway_settings_dir == Path("/gateway/tws_settings")
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("IB_GATEWAY_SETTINGS_DIR", "~/tws_settings")
+    assert Settings().gateway_settings_dir == tmp_path / "tws_settings"
+    assert Settings(gateway_settings_dir="~/x").gateway_settings_dir == tmp_path / "x"
+
+
+def test_an_unexpandable_gateway_settings_dir_is_a_validation_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Path.expanduser raises RuntimeError for an unknown user; the CLI must get a
+    ValidationError (its "invalid configuration" exit), not a traceback."""
+    value = "~no-such-user-ib-gateway-mcp/tws_settings"
+    monkeypatch.setenv("IB_GATEWAY_SETTINGS_DIR", value)
+    with pytest.raises(ValidationError, match="cannot expand '~'") as info:
+        Settings()
+    message = str(info.value)
+    assert "IB_GATEWAY_SETTINGS_DIR" in message
+    assert "no-such-user" not in message  # the value is not echoed
+
+
+@pytest.mark.parametrize("value", ["", "   "])
+def test_a_blank_gateway_settings_dir_means_unset(
+    monkeypatch: pytest.MonkeyPatch, value: str
+) -> None:
+    """Not ".", which would point the reader at the working directory."""
+    monkeypatch.setenv("IB_GATEWAY_SETTINGS_DIR", value)
+    assert Settings().gateway_settings_dir is None
+    assert Settings(gateway_settings_dir=value).gateway_settings_dir is None
 
 
 def test_toolsets_parse_and_validate(monkeypatch: pytest.MonkeyPatch) -> None:

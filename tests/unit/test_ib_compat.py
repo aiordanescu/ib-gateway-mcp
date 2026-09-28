@@ -7,6 +7,7 @@ from unittest.mock import MagicMock
 
 import pytest
 from ib_async import Contract
+from ib_async.connection import Connection
 from ib_async.wrapper import Wrapper
 
 from ib_gateway_mcp import _ib_compat
@@ -44,3 +45,14 @@ async def test_requests_for_contract() -> None:
     wrapper.startReq(8, contract)
     wrapper.startReq(9, Contract(conId=1))  # equal, but another object
     assert _ib_compat.requests_for_contract(wrapper, contract) == [8]
+
+
+def test_the_socket_counts_sent_messages() -> None:
+    """tcp_connect_timed_out reads Connection.numMsgSent; a rename must fail here."""
+    connection = Connection()
+    assert connection.numMsgSent == 0
+    ib = MagicMock()
+    ib.client.conn = connection
+    assert _ib_compat.tcp_connect_timed_out(ib) is True
+    connection.numMsgSent = 1
+    assert _ib_compat.tcp_connect_timed_out(ib) is False

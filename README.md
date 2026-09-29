@@ -8,7 +8,7 @@ An [MCP](https://modelcontextprotocol.io) server and Python library for the **In
 
 Add one service next to your IB Gateway container, and any MCP client (Claude, Cursor, and others) gets what the gateway offers: contracts, market data, history, scanners, news, fundamentals, account and P&L, and orders. Orders sit behind safety rails.
 
-> **Status:** early development. Releases are published on [PyPI](https://pypi.org/project/ib-gateway-mcp/) as `ib-gateway-mcp` and as the container image `ghcr.io/aiordanescu/ib-gateway-mcp`. Beyond the offline test suite, it has been tested against a real IB Gateway (10.45): the order suite on a paper login, and the read-only suite on both paper and live accounts.
+> **Status:** early development. Releases are published on [PyPI](https://pypi.org/project/ib-gateway-mcp/) as `ib-gateway-mcp` and as the container image `ghcr.io/aiordanescu/ib-gateway-mcp`. Beyond the offline test suite, it has been tested against a real IB Gateway: the order suite on a paper login and the read-only suite on paper and live accounts (10.45), and the login-state reader against the logs of 10.45 and 10.50 and a running 10.50 paper gateway.
 
 ## Why
 
@@ -60,7 +60,7 @@ claude mcp add --transport http ib-gateway http://127.0.0.1:8000/mcp \
 
 If ib-gateway-docker already runs in its own stack, run the server as a second stack, so updating one never recreates the other: copy the `ib-gateway-mcp` service with its secret and volume, set `IB_HOST` to the gateway's service name, and attach the service to the gateway stack's network (declared under `networks:` with `external: true`). Inside that network the gateway listens on 4004 (paper) and 4003 (live).
 
-The image is published for amd64 and arm64 as `ghcr.io/aiordanescu/ib-gateway-mcp`, tagged with each version (`0.1.1`), its minor series (`0.1`), and `latest` and `stable` for the latest release. Each image carries an SBOM and a build provenance attestation (`gh attestation verify oci://ghcr.io/aiordanescu/ib-gateway-mcp:0.1.1 --owner aiordanescu`). `docker build -t ib-gateway-mcp:local .` in a clone builds it yourself. The image runs as a non-root user (uid and gid 10001), serves streamable HTTP on port 8000 (`/mcp`), and has a Docker healthcheck on `/healthz`. The compose example runs it with a read-only root filesystem, no capabilities, and the audit log on a volume at `/audit`. `/healthz` (liveness) and `/readyz` (200 only while the gateway connection is up) are unauthenticated and return only `{"state", "ready"}`.
+The image is published for amd64 and arm64 as `ghcr.io/aiordanescu/ib-gateway-mcp`, tagged with each version (`0.2.0`), its minor series (`0.2`), and `latest` and `stable` for the latest release. Each image carries an SBOM and a build provenance attestation (`gh attestation verify oci://ghcr.io/aiordanescu/ib-gateway-mcp:0.2.0 --owner aiordanescu`). `docker build -t ib-gateway-mcp:local .` in a clone builds it yourself. The image runs as a non-root user (uid and gid 10001), serves streamable HTTP on port 8000 (`/mcp`), and has a Docker healthcheck on `/healthz`. The compose example runs it with a read-only root filesystem, no capabilities, and the audit log on a volume at `/audit`. `/healthz` (liveness) and `/readyz` (200 only while the gateway connection is up) are unauthenticated and return only `{"state", "ready"}`.
 
 ## Running without Docker
 
@@ -89,7 +89,7 @@ A stdio entry for an MCP client:
 }
 ```
 
-Pin a version with `ib-gateway-mcp==0.1.1` in place of `ib-gateway-mcp`. To run a clone instead (for development, or an unreleased commit), use `uv sync` in it, then `uv run ib-gateway-mcp` with the same variables and options, or `"command": "uv"` with `"args": ["--directory", "/path/to/ib-gateway-mcp", "run", "ib-gateway-mcp"]` in the client entry.
+Pin a version with `ib-gateway-mcp==0.2.0` in place of `ib-gateway-mcp`. To run a clone instead (for development, or an unreleased commit), use `uv sync` in it, then `uv run ib-gateway-mcp` with the same variables and options, or `"command": "uv"` with `"args": ["--directory", "/path/to/ib-gateway-mcp", "run", "ib-gateway-mcp"]` in the client entry.
 
 The server starts even when the gateway is down and keeps reconnecting; tools then fail with `not_connected`, and `get_health` reports what is known about why.
 

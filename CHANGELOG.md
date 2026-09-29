@@ -4,6 +4,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-28
+
 ### Added
 
 - `get_health` reports the gateway's login phase as `login_state` (restarting, logging in, waiting for 2FA approval, pausing after failed logins until `retry_at`, rejected, idle, logged in, or unknown), with the login attempts and 2FA challenges since the last successful login, when `IB_GATEWAY_SETTINGS_DIR` names the gateway's settings directory, mounted read-only. It reads only IB Gateway's `launcher.log` and its rotated copies, and returns the parsed state, never log text. `examples/docker-compose.yml` mounts it, and the README's "Gateway login state" section covers ib-gateway-docker's single and both modes, bind mounts and SELinux.
@@ -41,6 +43,7 @@ The first release.
 - Container image `ghcr.io/aiordanescu/ib-gateway-mcp` for amd64 and arm64 (tags `0.1.0`, `0.1`, `latest`, `stable`) with a build provenance attestation and an SBOM: a non-root numeric user and a healthcheck. `examples/docker-compose.yml` runs it next to ib-gateway-docker.
 - Reference docs: `docs/tools.md` (generated from the registry, with the library method behind each tool and the fields of every nested input type) and `docs/coverage.md`.
 
-[Unreleased]: https://github.com/aiordanescu/ib-gateway-mcp/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/aiordanescu/ib-gateway-mcp/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/aiordanescu/ib-gateway-mcp/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/aiordanescu/ib-gateway-mcp/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/aiordanescu/ib-gateway-mcp/releases/tag/v0.1.0

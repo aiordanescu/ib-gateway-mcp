@@ -7,7 +7,7 @@
 # hand). The Python minor and the Debian release are part of the tag, so moving either
 # is a deliberate change. uv stays in step with [tool.uv] required-version and CI.
 
-FROM ghcr.io/astral-sh/uv:0.12.5@sha256:e85be844203885286c60ffad8a858d48afb6c5a5c237ca0e67f12e74b8f174b1 AS uv
+FROM ghcr.io/astral-sh/uv:0.12.21@sha256:a7aed3216253ee804de3e2d8afa5073baa1a177335345d43845cd4165e43b711 AS uv
 
 # One pin for both stages: the virtualenv is built against the Python it runs on.
 FROM python:3.12.14-slim-trixie@sha256:2f17fc044b579bab302c2e8054d3a686e2cb9a83de48e70534b94cd8ebbe06a9 AS base

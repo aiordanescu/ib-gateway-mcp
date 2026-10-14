@@ -39,7 +39,7 @@ dependencies = [
     # Exact: services/_hooks.py and _ib_compat.py patch ib_async 2.1.0 internals, and the
     # coverage table (docs/coverage.md) lists that version's gaps.
     "ib-async==2.1.0",
-    "mcp>=2.2,<2.3",  # mcp/confirm.py relies on the 2.2 resolver and elicitation APIs
+    "mcp>=2.2,<2.4",  # mcp/confirm.py relies on the 2.2 resolver and elicitation APIs
     # Floors are the versions CI tests (the lock, and a lowest-direct run).
     "pydantic>=2.13",
     "pydantic-settings>=2.15",

@@ -4,6 +4,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-17
+
 ### Changed
 
 - On a server without order tools, the instructions say it is read-only by design and that the operator enables orders with `IBKR_MCP_PROFILE=trading` (or `full`), so a model doesn't take the missing order tools for a gap.
@@ -12,6 +14,12 @@ All notable changes to this project are documented here. The format follows [Kee
 
 - PyJWT 2.15.1 (through `mcp[crypto]`), for PYSEC-2026-4141 and PYSEC-2026-4183.
 - The image is built on `python:3.12.15-slim-trixie`, with the fixed pcre2 and OpenSSL packages (CVE-2026-103111, CVE-2026-84782).
+
+### Dependencies
+
+- `mcp` 2.3 is allowed (`>=2.2,<2.4`) and locked; the resolver and elicitation APIs that the human confirmation relies on are unchanged.
+- The lockfile is refreshed within the existing ranges (pydantic 2.14, starlette 1.8, uvicorn 0.54, cryptography 50.0.2 and others), and the dev tools move to ruff 0.17 and mypy 2.4.
+- uv 0.12.24 in the image and CI; the GitHub Actions move to their current majors (checkout 7, setup-uv 10, upload-artifact 7, setup-buildx 4); pre-commit hooks updated.
 
 ## [0.2.0] - 2026-09-28
 
@@ -52,7 +60,8 @@ The first release.
 - Container image `ghcr.io/aiordanescu/ib-gateway-mcp` for amd64 and arm64 (tags `0.1.0`, `0.1`, `latest`, `stable`) with a build provenance attestation and an SBOM: a non-root numeric user and a healthcheck. `examples/docker-compose.yml` runs it next to ib-gateway-docker.
 - Reference docs: `docs/tools.md` (generated from the registry, with the library method behind each tool and the fields of every nested input type) and `docs/coverage.md`.
 
-[Unreleased]: https://github.com/aiordanescu/ib-gateway-mcp/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/aiordanescu/ib-gateway-mcp/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/aiordanescu/ib-gateway-mcp/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/aiordanescu/ib-gateway-mcp/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/aiordanescu/ib-gateway-mcp/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/aiordanescu/ib-gateway-mcp/releases/tag/v0.1.0

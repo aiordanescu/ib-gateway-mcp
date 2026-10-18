@@ -4,6 +4,15 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Changed
+
+- On a server without order tools, the instructions say it is read-only by design and that the operator enables orders with `IBKR_MCP_PROFILE=trading` (or `full`), so a model doesn't take the missing order tools for a gap.
+
+### Security
+
+- PyJWT 2.15.1 (through `mcp[crypto]`), for PYSEC-2026-4141 and PYSEC-2026-4183.
+- The image is built on `python:3.12.15-slim-trixie`, with the fixed pcre2 and OpenSSL packages (CVE-2026-103111, CVE-2026-84782).
+
 ## [0.2.0] - 2026-09-28
 
 ### Added

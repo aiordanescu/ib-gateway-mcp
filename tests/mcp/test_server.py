@@ -335,6 +335,8 @@ def test_instructions_describe_the_safety_model(settings_factory: Callable[..., 
     readonly = build_instructions(settings_factory(), frozenset({"ops", "contracts"}))
     assert "Enabled toolsets: contracts, ops." in readonly
     assert "Order tools are not enabled" in readonly
+    assert "read-only by design" in readonly
+    assert "IBKR_MCP_PROFILE=trading" in readonly
     assert "get_subscription_data" not in readonly
     streaming = build_instructions(
         settings_factory(subscription_idle_ttl=600), frozenset({"ops", "market_data"})

@@ -227,6 +227,25 @@ Command-line flags (`--transport`, `--host`, `--port`, `--profile`, `--toolsets`
 | `trading` | readonly + orders | 60 |
 | `full` | trading + advisor, admin | 70 |
 
+The profiles are broad on purpose, and most agents need only a slice. Every tool description and schema goes into the model's context, and a model picks tools more reliably from a short list, so set `IBKR_MCP_TOOLSETS` to what the agent actually uses. It overrides the profile; `ops` (health, connection, accounts, user and server time) is always on, and `market_data` comes with `scanners`, `news` or `admin`, whose streams it reads and cancels.
+
+| Toolset | Tools |
+|---|---|
+| `ops` (always on) | 5 |
+| `contracts` | 7 |
+| `market_data` | 10 |
+| `history` | 5 |
+| `scanners` | 3 |
+| `news` | 5 |
+| `fundamentals` | 3 |
+| `account` | 9 |
+| `options` | 3 |
+| `orders` | 10 |
+| `advisor` | 5 |
+| `admin` | 5 |
+
+For example, `IBKR_MCP_TOOLSETS=account` gives a portfolio monitor 14 tools, `contracts,market_data,history` gives a research agent 27, and `contracts,account,orders` gives a trading agent 31 behind the same rails as the `trading` profile.
+
 Every tool, with its parameters: [docs/tools.md](https://github.com/aiordanescu/ib-gateway-mcp/blob/main/docs/tools.md). Streams (`subscribe_*`) return a subscription id; `get_subscription_data` reads it, `unsubscribe` stops it, and streams nobody reads are cancelled after `IBKR_MCP_SUBSCRIPTION_IDLE_TTL`.
 
 ## Safety

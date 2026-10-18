@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Documentation
+
+- The README's "Profiles and tools" section shows how many tools each toolset has and how to narrow the tool list with `IBKR_MCP_TOOLSETS`, with examples.
+
 ## [0.2.1] - 2026-10-17
 
 ### Changed

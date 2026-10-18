@@ -40,12 +40,20 @@ def test_coverage_md_names_every_tool() -> None:
     assert missing == [], f"add these tools to docs/coverage.md: {missing}"
 
 
-def _readme_table(section: str) -> list[list[str]]:
-    """The rows of the first Markdown table under ``## <section>`` in the README."""
+def _readme_table(section: str, index: int = 0) -> list[list[str]]:
+    """The rows of the ``index``-th Markdown table under ``## <section>`` in the README."""
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     body = readme.split(f"\n## {section}\n", 1)[1].split("\n## ", 1)[0]
-    rows = [line for line in body.splitlines() if line.startswith("|")]
-    return [[cell.strip() for cell in row.strip("|").split("|")] for row in rows[2:]]
+    tables: list[list[str]] = []
+    previous = ""
+    for line in body.splitlines():
+        if line.startswith("|"):
+            if not previous.startswith("|"):
+                tables.append([])
+            tables[-1].append(line)
+        previous = line
+    rows = tables[index][2:]
+    return [[cell.strip() for cell in row.strip("|").split("|")] for row in rows]
 
 
 def _documented_default(value: object) -> str:
@@ -91,6 +99,11 @@ def test_readme_tool_counts_match_the_registry() -> None:
         settings = Settings.model_validate({"profile": profile})
         tools = REGISTRY.specs_for(enabled_toolsets(settings))
         assert row[-1] == str(len(tools)), profile
+    toolset_rows = _readme_table("Profiles and tools", 1)
+    counts = {row[0].split()[0].strip("`"): row[1] for row in toolset_rows}
+    assert set(counts) == toolsets
+    for toolset, count in counts.items():
+        assert count == str(len(REGISTRY.specs_for(frozenset({toolset})))), toolset
 
 
 def test_readme_library_example_compiles_and_imports() -> None:

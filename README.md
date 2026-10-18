@@ -60,7 +60,7 @@ claude mcp add --transport http ib-gateway http://127.0.0.1:8000/mcp \
 
 If ib-gateway-docker already runs in its own stack, run the server as a second stack, so updating one never recreates the other: copy the `ib-gateway-mcp` service with its secret and volume, set `IB_HOST` to the gateway's service name, and attach the service to the gateway stack's network (declared under `networks:` with `external: true`). Inside that network the gateway listens on 4004 (paper) and 4003 (live).
 
-The image is published for amd64 and arm64 as `ghcr.io/aiordanescu/ib-gateway-mcp`, tagged with each version (`0.2.0`), its minor series (`0.2`), and `latest` and `stable` for the latest release. Each image carries an SBOM and a build provenance attestation (`gh attestation verify oci://ghcr.io/aiordanescu/ib-gateway-mcp:0.2.0 --owner aiordanescu`). `docker build -t ib-gateway-mcp:local .` in a clone builds it yourself. The image runs as a non-root user (uid and gid 10001), serves streamable HTTP on port 8000 (`/mcp`), and has a Docker healthcheck on `/healthz`. The compose example runs it with a read-only root filesystem, no capabilities, and the audit log on a volume at `/audit`. `/healthz` (liveness) and `/readyz` (200 only while the gateway connection is up) are unauthenticated and return only `{"state", "ready"}`.
+The image is published for amd64 and arm64 as `ghcr.io/aiordanescu/ib-gateway-mcp`, tagged with each version (`0.2.1`), its minor series (`0.2`), and `latest` and `stable` for the latest release. Each image carries an SBOM and a build provenance attestation (`gh attestation verify oci://ghcr.io/aiordanescu/ib-gateway-mcp:0.2.1 --owner aiordanescu`). `docker build -t ib-gateway-mcp:local .` in a clone builds it yourself. The image runs as a non-root user (uid and gid 10001), serves streamable HTTP on port 8000 (`/mcp`), and has a Docker healthcheck on `/healthz`. The compose example runs it with a read-only root filesystem, no capabilities, and the audit log on a volume at `/audit`. `/healthz` (liveness) and `/readyz` (200 only while the gateway connection is up) are unauthenticated and return only `{"state", "ready"}`.
 
 ## Running without Docker
 
@@ -89,7 +89,7 @@ A stdio entry for an MCP client:
 }
 ```
 
-Pin a version with `ib-gateway-mcp==0.2.0` in place of `ib-gateway-mcp`. To run a clone instead (for development, or an unreleased commit), use `uv sync` in it, then `uv run ib-gateway-mcp` with the same variables and options, or `"command": "uv"` with `"args": ["--directory", "/path/to/ib-gateway-mcp", "run", "ib-gateway-mcp"]` in the client entry.
+Pin a version with `ib-gateway-mcp==0.2.1` in place of `ib-gateway-mcp`. To run a clone instead (for development, or an unreleased commit), use `uv sync` in it, then `uv run ib-gateway-mcp` with the same variables and options, or `"command": "uv"` with `"args": ["--directory", "/path/to/ib-gateway-mcp", "run", "ib-gateway-mcp"]` in the client entry.
 
 The server starts even when the gateway is down and keeps reconnecting; tools then fail with `not_connected`, and `get_health` reports what is known about why.
 
@@ -300,34 +300,34 @@ Services: `gw.ops`, `gw.contracts`, `gw.market_data`, `gw.history`, `gw.scanners
 
 ## Agent skill (optional)
 
-[`skills/ib-gateway-mcp`](https://github.com/aiordanescu/ib-gateway-mcp/tree/main/skills/ib-gateway-mcp) is an [Agent Skills](https://agentskills.io) guide for the agent that uses this server. The tool descriptions cover each tool; the skill covers the workflows across them: preview, submit and fill checks, brackets, OCA groups and combos, market data types, which errors are final, and what to report while the gateway is down. It uses only the fields of the [specification](https://agentskills.io/specification) and bare tool names, so it works in any agent that loads skills. Install the release that matches your server; the commands below pin v0.2.0.
+[`skills/ib-gateway-mcp`](https://github.com/aiordanescu/ib-gateway-mcp/tree/main/skills/ib-gateway-mcp) is an [Agent Skills](https://agentskills.io) guide for the agent that uses this server. The tool descriptions cover each tool; the skill covers the workflows across them: preview, submit and fill checks, brackets, OCA groups and combos, market data types, which errors are final, and what to report while the gateway is down. It uses only the fields of the [specification](https://agentskills.io/specification) and bare tool names, so it works in any agent that loads skills. Install the release that matches your server; the commands below pin v0.2.1.
 
 Any agent, with [`npx skills`](https://github.com/vercel-labs/skills) (it asks which agents to install for) or the GitHub CLI's `gh skill` (a preview command):
 
 ```sh
-npx skills add aiordanescu/ib-gateway-mcp#v0.2.0 --skill ib-gateway-mcp
-gh skill install aiordanescu/ib-gateway-mcp ib-gateway-mcp@v0.2.0 --agent <agent> --scope user
+npx skills add aiordanescu/ib-gateway-mcp#v0.2.1 --skill ib-gateway-mcp
+gh skill install aiordanescu/ib-gateway-mcp ib-gateway-mcp@v0.2.1 --agent <agent> --scope user
 ```
 
 Claude Code:
 
 ```sh
-npx skills add aiordanescu/ib-gateway-mcp#v0.2.0 --skill ib-gateway-mcp -a claude-code -g
+npx skills add aiordanescu/ib-gateway-mcp#v0.2.1 --skill ib-gateway-mcp -a claude-code -g
 ```
 
 Codex, inside a session:
 
 ```text
-$skill-installer install https://github.com/aiordanescu/ib-gateway-mcp/tree/v0.2.0/skills/ib-gateway-mcp
+$skill-installer install https://github.com/aiordanescu/ib-gateway-mcp/tree/v0.2.1/skills/ib-gateway-mcp
 ```
 
 Hermes Agent:
 
 ```sh
-hermes skills install https://raw.githubusercontent.com/aiordanescu/ib-gateway-mcp/v0.2.0/skills/ib-gateway-mcp/SKILL.md
+hermes skills install https://raw.githubusercontent.com/aiordanescu/ib-gateway-mcp/v0.2.1/skills/ib-gateway-mcp/SKILL.md
 ```
 
-Or copy `skills/ib-gateway-mcp/` from the v0.2.0 tag into the agent's skills directory: `~/.claude/skills/` for Claude Code, `~/.agents/skills/` for most other agents.
+Or copy `skills/ib-gateway-mcp/` from the v0.2.1 tag into the agent's skills directory: `~/.claude/skills/` for Claude Code, `~/.agents/skills/` for most other agents.
 
 ## Development
 

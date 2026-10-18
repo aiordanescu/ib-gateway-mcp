@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Changed
+
+- uv 0.13 is supported: `[tool.uv] required-version` and the `uv_build` backend allow `<0.14` (0.12 still works), and the image, CI and releases use uv 0.13.1. A clone synced with uv 0.13 no longer fails with "Required uv version".
+
 ### Documentation
 
 - The README's "Profiles and tools" section shows how many tools each toolset has and how to narrow the tool list with `IBKR_MCP_TOOLSETS`, with examples.

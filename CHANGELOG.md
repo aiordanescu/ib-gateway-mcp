@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Changed
+
+- On a server without order tools, the instructions say it is read-only by design and that the operator enables orders with `IBKR_MCP_PROFILE=trading` (or `full`), so a model doesn't take the missing order tools for a gap.
+
 ## [0.2.0] - 2026-09-28
 
 ### Added

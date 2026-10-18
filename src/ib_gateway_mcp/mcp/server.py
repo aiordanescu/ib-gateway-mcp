@@ -115,7 +115,11 @@ def build_instructions(settings: Settings, toolsets: frozenset[str]) -> str:
             "kept across gateway reconnects."
         )
     if "orders" not in toolsets:
-        parts.append("Order tools are not enabled on this server.")
+        parts.append(
+            "Order tools are not enabled on this server: it is read-only by design, the "
+            "default. The operator enables them with IBKR_MCP_PROFILE=trading (or full); "
+            "you cannot."
+        )
         return "\n".join(parts)
     check = "get_order_status or get_open_orders" if "account" in toolsets else "get_order_status"
     parts.append(

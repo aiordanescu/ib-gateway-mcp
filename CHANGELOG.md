@@ -4,6 +4,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-10-18
+
 ### Changed
 
 - uv 0.13 is supported: `[tool.uv] required-version` and the `uv_build` backend allow `<0.14` (0.12 still works), and the image, CI and releases use uv 0.13.1. A clone synced with uv 0.13 no longer fails with "Required uv version".
@@ -68,7 +70,8 @@ The first release.
 - Container image `ghcr.io/aiordanescu/ib-gateway-mcp` for amd64 and arm64 (tags `0.1.0`, `0.1`, `latest`, `stable`) with a build provenance attestation and an SBOM: a non-root numeric user and a healthcheck. `examples/docker-compose.yml` runs it next to ib-gateway-docker.
 - Reference docs: `docs/tools.md` (generated from the registry, with the library method behind each tool and the fields of every nested input type) and `docs/coverage.md`.
 
-[Unreleased]: https://github.com/aiordanescu/ib-gateway-mcp/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/aiordanescu/ib-gateway-mcp/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/aiordanescu/ib-gateway-mcp/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/aiordanescu/ib-gateway-mcp/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/aiordanescu/ib-gateway-mcp/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/aiordanescu/ib-gateway-mcp/compare/v0.1.0...v0.1.1

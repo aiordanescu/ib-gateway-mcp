@@ -4,7 +4,7 @@ description: Places, changes and cancels Interactive Brokers (IBKR) orders and r
 license: MIT (see LICENSE.txt)
 compatibility: Requires the ib-gateway-mcp MCP server connected to IB Gateway or TWS. Written for the release in metadata.version; with an older server some tools or fields named here may be missing. Order tools need the trading or full profile.
 metadata:
-  version: "0.2.1"
+  version: "0.2.2"
   mcp-server: ib-gateway-mcp
 ---
 

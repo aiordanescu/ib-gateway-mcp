@@ -41,7 +41,7 @@ Everything lives in `src/ib_gateway_mcp/`, in two layers.
 
 ## Setup
 
-Python 3.12 or newer and [uv](https://docs.astral.sh/uv/) 0.12 (`pyproject.toml` pins the range).
+Python 3.12 or newer and [uv](https://docs.astral.sh/uv/) 0.12 or 0.13 (`pyproject.toml` pins the range).
 
 ```sh
 uv sync

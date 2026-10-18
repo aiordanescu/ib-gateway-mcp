@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  UV_VERSION: "0.12.24" # keep in step with [tool.uv] required-version and the Dockerfile
+  UV_VERSION: "0.13.1" # keep in step with [tool.uv] required-version and the Dockerfile
 
 jobs:
   lint:
